@@ -1,0 +1,4 @@
+Building DAG of jobs...
+MissingInputException in line 75 of /mnt/nfs/gigantor/ifs/DCEG/Home/luow2/20180220_test_hgap_run/reseq_pipeline/Snakefile:
+Missing input files for rule circlator:
+/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/LAT-025_SC448816_2241/HGAP_run/Resequence/preads4falcon.fasta

@@ -1,0 +1,4 @@
+Building DAG of jobs...
+MissingInputException in line 37 of /mnt/nfs/gigantor/ifs/DCEG/Home/luow2/20180220_test_hgap_run/reseq_pipeline/Snakefile:
+Missing input files for rule fasta_to_reference:
+/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence/

@@ -1,0 +1,91 @@
+#!/usr/bin/python
+
+##add your name below if you are editing this
+'''
+pipeline contributors:
+Wen
+
+
+This is to original dataset and plasmid contig to do resequencing and get the reads filtered out during plasmid follow up pipeline because they mapped to both chr and plasmid. and then use the whitelist reads to do assemble again.
+'''
+
+import glob
+import sys
+import os
+
+configfile: "config.yaml"
+
+SAMPLE_NAME = config['SAMPLE_NAME']
+JOB_NUM = config['JOB_NUM']
+
+rule all:
+    input:
+        expand('/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/circlator/04.merge.circularise_details.log', sample = SAMPLE_NAME),
+        expand('/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/old_vs_new.delta', sample = SAMPLE_NAME)
+
+rule fixstart:
+    input:
+        expand('/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/circlator_{job}/00.input_assembly.fasta', sample = SAMPLE_NAME, job = JOB_NUM)
+    output:
+        expand('/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/assembly{job}.fixstart.fasta', sample = SAMPLE_NAME, job = JOB_NUM)
+    params:
+        prefix = expand('/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/assembly{job}.fixstart', sample = SAMPLE_NAME, job = JOB_NUM)        
+    shell:
+        '. /etc/profile.d/modules.sh; module load samtools python python3 SPAdes/3.7.1 canu/1.5 bwa/0.7.15 prodigal/2.6.3 MUMmer/3.23;'
+        'circlator fixstart --genes_fa ../nusBx_rev.fa {input} {params.prefix}'
+
+rule fasta_to_reference:
+    input:
+        contig = expand('/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/assembly{job}.fixstart.fasta', sample = SAMPLE_NAME, job = JOB_NUM), 
+        dir = expand('/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence' , sample = SAMPLE_NAME) 
+    output:
+        expand('/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/resequence_run/referenceset.xml', sample = SAMPLE_NAME)
+    params:
+        'resequence_run'        
+    shell:
+        'rm -R {input.dir}/resequence_run/;/DCEG/CGF/Resources/PacBio/smrtlink/smrtcmds/bin/fasta-to-reference {input.contig} {input.dir} {params} --organism Hpylori'
+		
+rule resequence:
+    input:	
+        ref = '/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/resequence_run/referenceset.xml'		
+    output:
+        '/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/resequence_run/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta'
+    params:
+        outdir = '/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/resequence_run',
+        dataset = expand('/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/file{job}.subreadset.xml', sample = SAMPLE_NAME, job = JOB_NUM),
+        json = config['Resequence_JSON']
+    threads:
+        1
+    shell:
+        '/CGF/Resources/PacBio/smrtlink/current/bundles/smrttools/smrtcmds/bin/pbsmrtpipe pipeline-id pbsmrtpipe.pipelines.sa3_ds_resequencing_fat -e eid_ref_dataset:{input.ref} -e eid_subread:{params.dataset} --preset-json={params.json} --output-dir={params.outdir}'
+
+rule dnadiff:
+    input:
+        old = expand('/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/circlator_{job}/00.input_assembly.fasta', sample = SAMPLE_NAME, job = JOB_NUM),
+        new = '/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/resequence_run/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta'
+    output:
+        '/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/old_vs_new.delta'
+    params:
+        '/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/old_vs_new' 
+    shell:
+        '. /etc/profile.d/modules.sh; module load MUMmer/3.23;'
+        'dnadiff {input.old} {input.new} -p {params};'
+        'mummerplot --png -p {params}_mummerplot {output} -R {input.old} -Q {input.new}'
+		
+rule circlator:
+    input:
+        assembly = expand('/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/resequence_run/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta', sample = SAMPLE_NAME),
+        preadsfasta = expand('/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/preads4falcon.fasta', sample = SAMPLE_NAME)
+    output:
+        expand('/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/circlator/04.merge.circularise_details.log', sample = SAMPLE_NAME)
+    params:
+        outdir = expand('/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/circlator', sample = SAMPLE_NAME)
+#        outdir_final = expand('/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/plasmid_test/{sample}_plasmid/HGAP_filter{filterlen}_GL10000/circlator', sample = SAMPLE_NAME, filterlen = FILTER_LENGTH)
+    shell:
+        '. /etc/profile.d/modules.sh; module load samtools python python3 SPAdes/3.7.1 canu/1.5 bwa/0.7.15 prodigal/2.6.3 MUMmer/3.23;'	
+        'rm -R {params.outdir}; circlator all --merge_min_length_merge 1000 {input.assembly} {input.preadsfasta} {params.outdir};'
+#        'mv {params.outdir} {params.outdir_final}'
+
+##circlator will error out if output folder is already created and snakemake will automatically create output folder. Has to direct circlator output to another new folder and move it back to the designated snakemake outdir after circlator finish.		
+		
+		

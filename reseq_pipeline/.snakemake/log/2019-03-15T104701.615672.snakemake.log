@@ -1,0 +1,25 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cluster nodes: 6000
+Job counts:
+	count	jobs
+	1	all
+	1	circlator
+	1	dnadiff
+	1	fasta_to_reference
+	1	fixstart
+	1	resequence
+	6
+
+[Fri Mar 15 10:47:01 2019]
+rule fixstart:
+    input: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-006_SC489841_2269/HGAP_run/circlator_2269/00.input_assembly.fasta
+    output: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-006_SC489841_2269/HGAP_run/Resequence/assembly2269.fixstart.fasta
+    jobid: 5
+    reason: Missing output files: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-006_SC489841_2269/HGAP_run/Resequence/assembly2269.fixstart.fasta
+
+. /etc/profile.d/modules.sh; module load samtools python python3 SPAdes/3.7.1 canu/1.5 bwa/0.7.15 prodigal/2.6.3 MUMmer/3.23;circlator fixstart --genes_fa ../nusBx_rev.fa /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-006_SC489841_2269/HGAP_run/circlator_2269/00.input_assembly.fasta /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-006_SC489841_2269/HGAP_run/Resequence/assembly2269.fixstart
+Submitted job 5 with external jobid 'Your job 5227936 ("snakejob.fixstart.5.sh") has been submitted'.
+Terminating processes on user request, this might take some time.
+Will exit after finishing currently running jobs.
+Cancelling snakemake on user request.

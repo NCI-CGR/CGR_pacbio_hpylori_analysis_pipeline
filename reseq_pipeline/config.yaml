@@ -1,0 +1,6 @@
+JOB_NUM: 1839
+SAMPLE_NAME: Chi-010_SC422806_1839
+#HGAP_JSON: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/plasmid_test/preset_plasmid.json
+Resequence_JSON: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/plasmid_test/resequence_preset.json
+##PLASMID_CONTIG: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/plasmid_test/KOR-001_SC367279_1725_plasmid/HGAP_filter5000_GL10000_default/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta
+#ROOT_DIR: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/plasmid_test/

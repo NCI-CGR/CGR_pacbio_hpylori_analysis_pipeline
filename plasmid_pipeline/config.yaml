@@ -1,0 +1,6 @@
+JOB_NUM: 2233
+SAMPLE_NAME: LAT-022_SC448813_2233
+FILTER_LENGTH: 6000
+#HGAP_JSON: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/plasmid_test/preset_plasmid.json
+HGAP_JSON: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/plasmid_test/preset_plasmid_SL2500_MC20.json
+ROOT_DIR: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/plasmid_test/

@@ -1,0 +1,4 @@
+Building DAG of jobs...
+MissingInputException in line 21 of /mnt/nfs/gigantor/ifs/DCEG/Home/luow2/20180220_test_hgap_run/reseq_pipeline/Snakefile:
+Missing input files for rule all:
+/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/plasmid_test/Chi-010_SC422806_1839_plasmid/plasmid_resequence/HGAP/circlator/04.merge.circularise_details.log

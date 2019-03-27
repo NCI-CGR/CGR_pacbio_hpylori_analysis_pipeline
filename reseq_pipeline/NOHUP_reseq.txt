@@ -1,0 +1,13 @@
+qsub -cwd -q seq-calling.q -N reseq_Chi-010_SC422806_1839 -o reseq_Chi-010_SC422806_1839.stdout -e reseq_Chi-010_SC422806_1839.stderr -S /bin/sh mainSnake.sh Chi-010_SC422806_1839
+qsub -cwd -q seq-calling.q -N reseq_Chi-021_SC422812_1854 -o reseq_Chi-021_SC422812_1854.stdout -e reseq_Chi-021_SC422812_1854.stderr -S /bin/sh mainSnake.sh Chi-021_SC422812_1854
+qsub -cwd -q seq-calling.q -N reseq_Chi-123_SC422834_2078 -o reseq_Chi-123_SC422834_2078.stdout -e reseq_Chi-123_SC422834_2078.stderr -S /bin/sh mainSnake.sh Chi-123_SC422834_2078
+qsub -cwd -q seq-calling2.q -N reseq_KOR-110_SC367308_1707 -o reseq_KOR-110_SC367308_1707.stdout -e reseq_KOR-110_SC367308_1707.stderr -S /bin/sh mainSnake.sh KOR-110_SC367308_1707
+qsub -cwd -q seq-calling2.q -N reseq_KOR-037_SC367294_1772 -o reseq_KOR-037_SC367294_1772.stdout -e reseq_KOR-037_SC367294_1772.stderr -S /bin/sh mainSnake.sh KOR-037_SC367294_1772
+qsub -cwd -q seq-calling2.q -N reseq_LAT-025_SC448816_2241 -o reseq_LAT-025_SC448816_2241.stdout -e reseq_LAT-025_SC448816_2241.stderr -S /bin/sh mainSnake.sh LAT-025_SC448816_2241
+qsub -cwd -q seq-calling2.q -N reseq_LAT-027_SC448818_2237 -o reseq_LAT-027_SC448818_2237.stdout -e reseq_LAT-027_SC448818_2237.stderr -S /bin/sh mainSnake.sh LAT-027_SC448818_2237
+qsub -cwd -q seq-calling2.q -N reseq_POR-012_SC489847_2280 -o logs/reseq_POR-012_SC489847_2280.stdout -e logs/reseq_POR-012_SC489847_2280.stderr -S /bin/sh mainSnake.sh POR-012_SC489847_2280
+qsub -cwd -q seq-calling2.q -N reseq_POR-017_SC489851_2276 -o logs/reseq_POR-017_SC489851_2276.stdout -e logs/reseq_POR-017_SC489851_2276.stderr -S /bin/sh mainSnake.sh POR-017_SC489851_2276
+qsub -cwd -q seq-calling2.q -N reseq_SWT-003_SC489855_2289 -o logs/reseq_SWT-003_SC489855_2289.stdout -e logs/reseq_SWT-003_SC489855_2289.stderr -S /bin/sh mainSnake.sh SWT-003_SC489855_2289
+qsub -cwd -q seq-calling2.q -N reseq_SWT-005_SC489857_2287 -o logs/reseq_SWT-005_SC489857_2287.stdout -e logs/reseq_SWT-005_SC489857_2287.stderr -S /bin/sh mainSnake.sh SWT-005_SC489857_2287
+qsub -cwd -q seq-calling2.q -N reseq_SWT-006_SC489858_2286 -o logs/reseq_SWT-006_SC489858_2286.stdout -e logs/reseq_SWT-006_SC489858_2286.stderr -S /bin/sh mainSnake.sh SWT-006_SC489858_2286
+qsub -cwd -q seq-calling2.q -N reseq_SWT-002_SC489854_2290 -o logs/reseq_SWT-002_SC489854_2290.stdout -e logs/SWT-002_SC489854_2290.stderr -S /bin/sh mainSnake.sh SWT-002_SC489854_2290

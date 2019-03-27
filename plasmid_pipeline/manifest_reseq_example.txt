@@ -1,0 +1,5 @@
+Chi-107_SC422825_2125	/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/plasmid_test/Chi-107_SC422825_2125_plasmid/HGAP_filter6000_GL10000/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta
+Chi-117_SC422830_2167	/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/plasmid_test/Chi-117_SC422830_2167_plasmid/HGAP_filter8000_GL10000/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta
+Chi-124_SC422835_2077	/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/plasmid_test/Chi-124_SC422835_2077_plasmid/HGAP_filter6000_GL10000/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta
+Chi-008_SC422805_1840	/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/plasmid_test/Chi-008_SC422805_1840_plasmid/HGAP_filter6000_GL10000/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset00002F.fasta
+Chi-125_SC422836_2085	/CGF/Resources/PacBio/jobs/002/002085/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset00001F.fasta

@@ -1,0 +1,30 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cluster nodes: 6000
+Job counts:
+	count	jobs
+	1	all
+	1	circlator
+	1	dnadiff
+	1	resequence
+	4
+
+[Mon Feb 25 10:35:41 2019]
+rule resequence:
+    input: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/KOR-037_SC367294_1772/HGAP_run/Resequence/resequence_run/referenceset.xml
+    output: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/KOR-037_SC367294_1772/HGAP_run/Resequence/resequence_run/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta
+    jobid: 3
+    reason: Missing output files: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/KOR-037_SC367294_1772/HGAP_run/Resequence/resequence_run/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta
+    wildcards: sample=KOR-037_SC367294_1772
+
+/CGF/Resources/PacBio/smrtlink/current/bundles/smrttools/smrtcmds/bin/pbsmrtpipe pipeline-id pbsmrtpipe.pipelines.sa3_ds_resequencing_fat -e eid_ref_dataset:/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/KOR-037_SC367294_1772/HGAP_run/Resequence/resequence_run/referenceset.xml -e eid_subread:/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/KOR-037_SC367294_1772/HGAP_run/Resequence/file1772.subreadset.xml --preset-json=/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/plasmid_test/resequence_preset.json --output-dir=/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/KOR-037_SC367294_1772/HGAP_run/Resequence/resequence_run
+Submitted job 3 with external jobid 'Your job 4962662 ("snakejob.resequence.3.sh") has been submitted'.
+    [Mon Feb 25 11:00:24 2019]
+    Error in rule resequence:
+        jobid: 3
+        output: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/KOR-037_SC367294_1772/HGAP_run/Resequence/resequence_run/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta
+        cluster_jobid: Your job 4962662 ("snakejob.resequence.3.sh") has been submitted
+
+Job failed, going on with independent jobs.
+Exiting because a job execution failed. Look above for error message
+Complete log: /mnt/nfs/gigantor/ifs/DCEG/Home/luow2/20180220_test_hgap_run/reseq_pipeline/.snakemake/log/2019-02-25T103541.316957.snakemake.log

@@ -1,0 +1,2 @@
+SyntaxError in line 55 of /mnt/nfs/gigantor/ifs/DCEG/Home/luow2/20180220_test_hgap_run/reseq_pipeline/Snakefile:
+Unexpected keyword json in rule definition (Snakefile, line 55)

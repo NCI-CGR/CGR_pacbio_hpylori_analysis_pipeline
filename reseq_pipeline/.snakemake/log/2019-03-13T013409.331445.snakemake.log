@@ -1,0 +1,31 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cluster nodes: 6000
+Job counts:
+	count	jobs
+	1	all
+	1	circlator
+	1	dnadiff
+	1	fasta_to_reference
+	1	fixstart
+	1	resequence
+	6
+
+[Wed Mar 13 01:34:09 2019]
+rule fixstart:
+    input: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/circlator_2280/00.input_assembly.fasta
+    output: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/assembly2280.fixstart.fasta
+    jobid: 5
+    reason: Missing output files: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/assembly2280.fixstart.fasta
+
+. /etc/profile.d/modules.sh; module load samtools python python3 SPAdes/3.7.1 canu/1.5 bwa/0.7.15 prodigal/2.6.3 MUMmer/3.23;circlator fixstart --genes_fa ../nusBx.fa /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/circlator_2280/00.input_assembly.fasta /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/assembly2280.fixstart
+Submitted job 5 with external jobid 'Your job 5224823 ("snakejob.fixstart.5.sh") has been submitted'.
+    [Wed Mar 13 01:34:49 2019]
+    Error in rule fixstart:
+        jobid: 5
+        output: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/assembly2280.fixstart.fasta
+        cluster_jobid: Your job 5224823 ("snakejob.fixstart.5.sh") has been submitted
+
+Job failed, going on with independent jobs.
+Exiting because a job execution failed. Look above for error message
+Complete log: /mnt/nfs/gigantor/ifs/DCEG/Home/luow2/20180220_test_hgap_run/reseq_pipeline/.snakemake/log/2019-03-13T013409.331445.snakemake.log

@@ -1,0 +1,33 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 1
+Rules claiming more threads will be scaled down.
+Job counts:
+	count	jobs
+	1	all
+	1	circlator
+	1	dnadiff
+	1	fasta_to_reference
+	1	fixstart
+	1	resequence
+	6
+
+[Fri Feb  8 16:13:42 2019]
+rule fixstart:
+    input: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/circlator_1839/00.input_assembly.fasta
+    output: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence/assembly1839.fixstart.fasta
+    jobid: 5
+
+    [Fri Feb  8 16:13:45 2019]
+    Error in rule fixstart:
+        jobid: 5
+        output: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence/assembly1839.fixstart.fasta
+
+RuleException:
+CalledProcessError in line 35 of /mnt/nfs/gigantor/ifs/DCEG/Home/luow2/20180220_test_hgap_run/reseq_pipeline/Snakefile:
+Command ' set -euo pipefail;  . /etc/profile.d/modules.sh; module load samtools python python3 SPAdes/3.7.1 canu/1.5 bwa/0.7.15 prodigal/2.6.3 MUMmer/3.23;circlator fixstart --genes_fa ../nusBx.fa /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/circlator_1839/00.input_assembly.fasta ['/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence/assembly1839.fixstart'] ' returned non-zero exit status 1.
+  File "/mnt/nfs/gigantor/ifs/DCEG/Home/luow2/20180220_test_hgap_run/reseq_pipeline/Snakefile", line 35, in __rule_fixstart
+  File "/DCEG/Resources/Tools/python3/3.6.3-shared/lib/python3.6/concurrent/futures/thread.py", line 56, in run
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: /mnt/nfs/gigantor/ifs/DCEG/Home/luow2/20180220_test_hgap_run/reseq_pipeline/.snakemake/log/2019-02-08T161341.493808.snakemake.log

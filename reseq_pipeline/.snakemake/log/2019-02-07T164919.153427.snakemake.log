@@ -1,0 +1,3 @@
+WildcardError in line 64 of /mnt/nfs/gigantor/ifs/DCEG/Home/luow2/20180220_test_hgap_run/reseq_pipeline/Snakefile:
+No values given for wildcard 'sample'.
+  File "/mnt/nfs/gigantor/ifs/DCEG/Home/luow2/20180220_test_hgap_run/reseq_pipeline/Snakefile", line 64, in <module>

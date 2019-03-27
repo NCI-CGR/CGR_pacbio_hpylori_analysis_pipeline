@@ -1,0 +1,31 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 1
+Rules claiming more threads will be scaled down.
+Job counts:
+	count	jobs
+	1	all
+	1	circlator
+	1	dnadiff
+	1	fasta_to_reference
+	1	resequence
+	5
+
+[Fri Feb  8 16:58:03 2019]
+rule fasta_to_reference:
+    input: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence/assembly1839.fixstart.fasta, /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence/
+    output: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence/resequence_run/referenceset.xml
+    jobid: 4
+
+Terminating processes on user request, this might take some time.
+    [Fri Feb  8 16:58:15 2019]
+    Error in rule fasta_to_reference:
+        jobid: 4
+        output: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence/resequence_run/referenceset.xml
+
+RuleException:
+CalledProcessError in line 46 of /mnt/nfs/gigantor/ifs/DCEG/Home/luow2/20180220_test_hgap_run/reseq_pipeline/Snakefile:
+Command ' set -euo pipefail;  rm -R /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence//resequence_run/;/DCEG/CGF/Resources/PacBio/smrtlink/smrtcmds/bin/fasta-to-reference /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence/assembly1839.fixstart.fasta /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence/ resequence_run --organism Hpylori ' died with <Signals.SIGINT: 2>.
+  File "/mnt/nfs/gigantor/ifs/DCEG/Home/luow2/20180220_test_hgap_run/reseq_pipeline/Snakefile", line 46, in __rule_fasta_to_reference
+  File "/DCEG/Resources/Tools/python3/3.6.3-shared/lib/python3.6/concurrent/futures/thread.py", line 56, in run
+Complete log: /mnt/nfs/gigantor/ifs/DCEG/Home/luow2/20180220_test_hgap_run/reseq_pipeline/.snakemake/log/2019-02-08T165802.550435.snakemake.log

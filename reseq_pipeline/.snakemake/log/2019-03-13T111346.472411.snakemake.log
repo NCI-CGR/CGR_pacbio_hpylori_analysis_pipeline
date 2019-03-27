@@ -1,0 +1,91 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cluster nodes: 6000
+Job counts:
+	count	jobs
+	1	all
+	1	circlator
+	1	dnadiff
+	1	fasta_to_reference
+	1	fixstart
+	1	resequence
+	6
+
+[Wed Mar 13 11:13:47 2019]
+rule fixstart:
+    input: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/circlator_2280/00.input_assembly.fasta
+    output: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/assembly2280.fixstart.fasta
+    jobid: 5
+    reason: Missing output files: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/assembly2280.fixstart.fasta
+
+. /etc/profile.d/modules.sh; module load samtools python python3 SPAdes/3.7.1 canu/1.5 bwa/0.7.15 prodigal/2.6.3 MUMmer/3.23;circlator fixstart --genes_fa ../nusBx_rev.fa /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/circlator_2280/00.input_assembly.fasta /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/assembly2280.fixstart
+Submitted job 5 with external jobid 'Your job 5225095 ("snakejob.fixstart.5.sh") has been submitted'.
+[Wed Mar 13 11:14:17 2019]
+Finished job 5.
+1 of 6 steps (17%) done
+
+[Wed Mar 13 11:14:17 2019]
+rule fasta_to_reference:
+    input: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/assembly2280.fixstart.fasta, /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence
+    output: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/resequence_run/referenceset.xml
+    jobid: 4
+    reason: Missing output files: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/resequence_run/referenceset.xml; Input files updated by another job: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/assembly2280.fixstart.fasta
+
+rm -R /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/resequence_run/;/DCEG/CGF/Resources/PacBio/smrtlink/smrtcmds/bin/fasta-to-reference /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/assembly2280.fixstart.fasta /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence resequence_run --organism Hpylori
+Submitted job 4 with external jobid 'Your job 5225103 ("snakejob.fasta_to_reference.4.sh") has been submitted'.
+[Wed Mar 13 11:15:17 2019]
+Finished job 4.
+2 of 6 steps (33%) done
+
+[Wed Mar 13 11:15:17 2019]
+rule resequence:
+    input: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/resequence_run/referenceset.xml
+    output: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/resequence_run/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta
+    jobid: 3
+    reason: Missing output files: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/resequence_run/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta; Input files updated by another job: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/resequence_run/referenceset.xml
+    wildcards: sample=POR-012_SC489847_2280
+
+/CGF/Resources/PacBio/smrtlink/current/bundles/smrttools/smrtcmds/bin/pbsmrtpipe pipeline-id pbsmrtpipe.pipelines.sa3_ds_resequencing_fat -e eid_ref_dataset:/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/resequence_run/referenceset.xml -e eid_subread:/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/file2280.subreadset.xml --preset-json=/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/plasmid_test/resequence_preset.json --output-dir=/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/resequence_run
+Submitted job 3 with external jobid 'Your job 5225111 ("snakejob.resequence.3.sh") has been submitted'.
+[Wed Mar 13 11:25:48 2019]
+Finished job 3.
+3 of 6 steps (50%) done
+
+[Wed Mar 13 11:25:48 2019]
+rule circlator:
+    input: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/resequence_run/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta, /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/preads4falcon.fasta
+    output: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/circlator/04.merge.circularise_details.log
+    jobid: 2
+    reason: Missing output files: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/circlator/04.merge.circularise_details.log; Input files updated by another job: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/resequence_run/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta
+
+. /etc/profile.d/modules.sh; module load samtools python python3 SPAdes/3.7.1 canu/1.5 bwa/0.7.15 prodigal/2.6.3 MUMmer/3.23;rm -R /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/circlator; circlator all --merge_min_length_merge 1000 /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/resequence_run/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/preads4falcon.fasta /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/circlator;
+Submitted job 2 with external jobid 'Your job 5225320 ("snakejob.circlator.2.sh") has been submitted'.
+
+[Wed Mar 13 11:25:48 2019]
+rule dnadiff:
+    input: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/circlator_2280/00.input_assembly.fasta, /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/resequence_run/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta
+    output: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/old_vs_new.delta
+    jobid: 1
+    reason: Missing output files: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/old_vs_new.delta; Input files updated by another job: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/resequence_run/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta
+    wildcards: sample=POR-012_SC489847_2280
+
+. /etc/profile.d/modules.sh; module load MUMmer/3.23;dnadiff /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/circlator_2280/00.input_assembly.fasta /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/resequence_run/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta -p /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/old_vs_new;mummerplot --png -p /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/old_vs_new_mummerplot /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/old_vs_new.delta -R /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/circlator_2280/00.input_assembly.fasta -Q /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/resequence_run/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta
+Submitted job 1 with external jobid 'Your job 5225321 ("snakejob.dnadiff.1.sh") has been submitted'.
+Waiting at most 120 seconds for missing files.
+[Wed Mar 13 11:26:49 2019]
+Finished job 1.
+4 of 6 steps (67%) done
+[Wed Mar 13 11:29:49 2019]
+Finished job 2.
+5 of 6 steps (83%) done
+
+[Wed Mar 13 11:29:49 2019]
+localrule all:
+    input: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/circlator/04.merge.circularise_details.log, /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/old_vs_new.delta
+    jobid: 0
+    reason: Input files updated by another job: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/old_vs_new.delta, /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/POR-012_SC489847_2280/HGAP_run/Resequence/circlator/04.merge.circularise_details.log
+
+[Wed Mar 13 11:29:49 2019]
+Finished job 0.
+6 of 6 steps (100%) done
+Complete log: /mnt/nfs/gigantor/ifs/DCEG/Home/luow2/20180220_test_hgap_run/reseq_pipeline/.snakemake/log/2019-03-13T111346.472411.snakemake.log

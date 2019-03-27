@@ -1,0 +1,75 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 1
+Rules claiming more threads will be scaled down.
+Job counts:
+	count	jobs
+	1	all
+	1	circlator
+	1	dnadiff
+	1	fasta_to_reference
+	1	fixstart
+	1	resequence
+	6
+
+[Fri Feb  8 16:22:43 2019]
+rule fixstart:
+    input: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/circlator_1839/00.input_assembly.fasta
+    output: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence/assembly1839.fixstart.fasta
+    jobid: 5
+
+[Fri Feb  8 16:22:52 2019]
+Finished job 5.
+1 of 6 steps (17%) done
+
+[Fri Feb  8 16:22:52 2019]
+rule fasta_to_reference:
+    input: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence/assembly1839.fixstart.fasta, /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence/
+    output: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence/resequence_run/referenceset.xml
+    jobid: 4
+
+[Fri Feb  8 16:23:19 2019]
+Finished job 4.
+2 of 6 steps (33%) done
+
+[Fri Feb  8 16:23:19 2019]
+rule resequence:
+    input: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence/resequence_run/referenceset.xml
+    output: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence/resequence_run/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta
+    jobid: 3
+    wildcards: sample=Chi-010_SC422806_1839
+
+[Fri Feb  8 16:37:16 2019]
+Finished job 3.
+3 of 6 steps (50%) done
+
+[Fri Feb  8 16:37:16 2019]
+rule circlator:
+    input: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence/resequence_run/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta, /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence/preads4falcon.fasta
+    output: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence/circlator/04.merge.circularise_details.log
+    jobid: 2
+
+[Fri Feb  8 16:48:51 2019]
+Finished job 2.
+4 of 6 steps (67%) done
+
+[Fri Feb  8 16:48:51 2019]
+rule dnadiff:
+    input: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/circlator_1839/00.input_assembly.fasta, /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence/resequence_run/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta
+    output: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence/old_vs_new.delta
+    jobid: 1
+    wildcards: sample=Chi-010_SC422806_1839
+
+    [Fri Feb  8 16:48:51 2019]
+    Error in rule dnadiff:
+        jobid: 1
+        output: /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence/old_vs_new.delta
+
+RuleException:
+CalledProcessError in line 73 of /mnt/nfs/gigantor/ifs/DCEG/Home/luow2/20180220_test_hgap_run/reseq_pipeline/Snakefile:
+Command ' set -euo pipefail;  . /etc/profile.d/modules.sh; module load MUMmer/3.23;dnadiff (input.old) /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence/resequence_run/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta -p /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence/old_vs_new;mummerplot --png -p /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence/old_vs_new_mummerplot /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence/old_vs_new.delta -R (input.old) -Q /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Chi-010_SC422806_1839/HGAP_run/Resequence/resequence_run/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta ' returned non-zero exit status 1.
+  File "/mnt/nfs/gigantor/ifs/DCEG/Home/luow2/20180220_test_hgap_run/reseq_pipeline/Snakefile", line 73, in __rule_dnadiff
+  File "/DCEG/Resources/Tools/python3/3.6.3-shared/lib/python3.6/concurrent/futures/thread.py", line 56, in run
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: /mnt/nfs/gigantor/ifs/DCEG/Home/luow2/20180220_test_hgap_run/reseq_pipeline/.snakemake/log/2019-02-08T162242.598446.snakemake.log

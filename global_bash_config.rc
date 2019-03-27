@@ -1,0 +1,17 @@
+#!/bin/bash
+
+module load bwa/0.7.15 canu/1.5 prodigal/2.6.3 SPAdes/3.10.1 MUMmer/3.23 python samtools python3 sge
+
+ROOT_DIR=/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run
+#CONSOLIDATED_XML=${ROOT_DIR}/consolidated_xml
+#SPLITTED_XML=${ROOT_DIR}/splitted_xml
+PACBIO_JOB_DIR=/CGF/Resources/PacBio/jobs
+SMRTCMDS=/CGF/Resources/PacBio/smrtlink/current/bundles/smrttools/smrtcmds/bin
+QUEUE=long.q
+
+
+SCRIPT_DIR=/home/luow2/20180220_test_hgap_run/
+HGAP_JSON=${SCRIPT_DIR}/preset_hgap.json
+BASEMOD_JSON=${SCRIPT_DIR}/preset_basemod.json
+
+DELIVERY_DIR=/DCEG/Projects/DataDelivery/hpylori
