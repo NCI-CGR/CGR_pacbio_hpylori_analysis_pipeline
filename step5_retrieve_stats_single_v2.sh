@@ -5,12 +5,25 @@ HGAP_ANALYSISID=$1
 VIAL_ID=$2
 CGR_ID=$3
 
-HGAP_ANALYSISID_PART1_PRE=$(echo $HGAP_ANALYSISID | rev | cut -c4- | rev )
-HGAP_ANALYSISID_PART1=$(printf "%03d\n" $HGAP_ANALYSISID_PART1_PRE)
-HGAP_ANALYSISID_PART2=$(echo $HGAP_ANALYSISID | rev | cut -c1-3 | rev)
+#pacbio job path is always changing, get the length of jobid and append correct number of 0s to the job id to locate the file path
+NUM=$(echo -n $HGAP_ANALYSISID | wc -c)
+DOT=""
+for j in seq 1 $NUM;do DOT="${DOT}.";done
+HGAP_ANALYSISID_PART2=$(echo $JOB_PATH_LEN | sed "s/$DOT$/$HGAP_ANALYSISID/")
+HGAP_ANALYSISID_PART1=$(echo $HGAP_ANALYSISID_PART2 | cut -c1-7)
+REAL_JOB_DIR=$(readlink ${PACBIO_JOB_DIR8}/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART2}/cromwell-job)
 OUT_HGAP=${ROOT_DIR}/${VIAL_ID}_${CGR_ID}_${HGAP_ANALYSISID}/HGAP_run
 OUT_BASEMOD=${ROOT_DIR}/${VIAL_ID}_${CGR_ID}_${HGAP_ANALYSISID}/BASEMOD_run
-HGAP_HTRL_FOLDER=${PACBIO_JOB_DIR}/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART1}${HGAP_ANALYSISID_PART2}/html
+ANALYSIS_TYPE=$(dirname ${REAL_JOB_DIR} | xargs basename)
+if [[ $ANALYSIS_TYPE == pb_assembly_microbial ]]; then
+	HGAP_HTRL_FOLDER=$(ls -d ${REAL_JOB_DIR}/call-mapping_all/RaptorGraphMapping/*/call-coverage_report/execution/)
+	POLISHED_CONTIG_DIR=${REAL_JOB_DIR}/call-polished_assembly/execution
+elif [[ $ANALYSIS_TYPE == pb_hgap4 ]]; then
+	HGAP_HTRL_FOLDER=${REAL_JOB_DIR}/call-coverage_report/execution/
+	POLISHED_CONTIG_DIR=${REAL_JOB_DIR}/call-polished_assembly/execution
+fi
+MAPPING_REPORT=`find ${REAL_JOB_DIR}/ -name "mapping_stats.report.json"`
+PREASSEMBLE_REPORT=`find ${REAL_JOB_DIR}/ -name "preassembly.report.json"`
 BASEMOD_HTML_FOLDER=${ROOT_DIR}/${VIAL_ID}_${CGR_ID}_${HGAP_ANALYSISID}/BASEMOD_run/html
 REPORT_DIR=${ROOT_DIR}/${VIAL_ID}_${CGR_ID}_${HGAP_ANALYSISID}/Report
 HTML_REPORT=${REPORT_DIR}/${VIAL_ID}_${CGR_ID}_report.html
@@ -24,7 +37,7 @@ rm ${HTML_REPORT}/*.html 2>/dev/null
 HEADER=""
 CONTENT=""
 for i in "Polished Contigs" "Maximum Contig Length" "N50 Contig Length" "Sum of Contig Lengths";do 
-	VALUE=$(grep -A 1 "$i" ${HGAP_HTRL_FOLDER}/pbreports.tasks.polished_assembly.html | tail -1 | cut -f2 -d:)
+	VALUE=$(grep -A 1 "$i" ${POLISHED_CONTIG_DIR}/polished_assembly.report.json | head -2 | tail -1 | cut -f2 -d:)
 	HEADER="$HEADER\t$i" 
 	CONTENT="$CONTENT\t$VALUE"
 done
@@ -53,11 +66,11 @@ echo -e $HEADER >> ${REPORT_TMP}/polished_assembly_report.txt
 echo -e $CONTENT >> ${REPORT_TMP}/polished_assembly_report.txt
 
 python tsv2html_colorless.py ${REPORT_TMP}/polished_assembly_report.txt ${REPORT_TMP}/polished_assembly_report_html.txt
-cp ${HGAP_HTRL_FOLDER}/images/pbreports.tasks.polished_assembly/polished_coverage_vs_quality.png ${REPORT_DIR}
+cp ${POLISHED_CONTIG_DIR}/polished_coverage_vs_quality.png ${REPORT_DIR}
 
 #processing coverage report
 HEADER="Mean Coverage"
-CONTENT=$(grep -A 1 "Mean Coverage" ${HGAP_HTRL_FOLDER}/pbreports.tasks.coverage_report_hgap.html| tail -1 | cut -f2 -d: | bc -l | xargs -I {} printf "%5.4f" {})
+CONTENT=$(grep -A 1 "Mean Coverage" ${HGAP_HTRL_FOLDER}/coverage.report.json| tail -1 | cut -f2 -d: | bc -l | xargs -I {} printf "%5.4f" {})
 
 
 echo -e $HEADER >> ${REPORT_TMP}/coverage_report.txt
@@ -70,14 +83,14 @@ python tsv2html_colorless.py ${REPORT_TMP}/coverage_report.txt ${REPORT_TMP}/cov
 #processing realignment report
 HEADER=""
 CONTENT=""
-for i in "Number of Polymerase Reads (realigned)" "Polymerase Read Length Mean (realigned)" "Polymerase Read N50 (realigned)" "Number of Subread Bases (realigned)" "Alignment Length Mean (realigned)" ;do 
-	VALUE=$(grep -A 1 "$i" ${HGAP_HTRL_FOLDER}/pbreports.tasks.mapping_stats_hgap.html | head -2 | tail -1 | cut -f2 -d:)
+for i in "Number of Polymerase Reads (aligned)" "Polymerase Read Length Mean (aligned)" "Polymerase Read N50 (aligned)" "Number of Subread Bases (aligned)" "Alignment Length Mean (aligned)" ;do 
+	VALUE=$(grep -A 1 "$i" ${MAPPING_REPORT} | head -2 | tail -1 | cut -f2 -d:)
 	HEADER="$HEADER\t$i"
 	CONTENT="$CONTENT\t$VALUE"
 done
 
-i="Mean Concordance (realigned)"
-VALUE=$(grep -A 1 "$i" ${HGAP_HTRL_FOLDER}/pbreports.tasks.mapping_stats_hgap.html | head -2 | tail -1 | cut -f2 -d: | bc -l | xargs -I {} printf "%0.4f" {})
+i="Mean Concordance (aligned)"
+VALUE=$(grep -A 1 "$i" ${MAPPING_REPORT} | head -2 | tail -1 | cut -f2 -d: | bc -l | xargs -I {} printf "%0.4f" {})
 HEADER="$HEADER\t$i"
 CONTENT="$CONTENT\t$VALUE"
 
@@ -89,11 +102,11 @@ cp ${BASEMOD_HTML_FOLDER}/images/pbreports.tasks.modifications_report/kinetic_de
 cp ${BASEMOD_HTML_FOLDER}/images/pbreports.tasks.modifications_report/kinetic_histogram.png ${REPORT_DIR}
 
 #generating parameter file
-grep "u'" ${PACBIO_JOB_DIR}/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART1}${HGAP_ANALYSISID_PART2}/logs/pbsmrtpipe.log | sed -e "s/u'//g" | sed -e "s/'//g" | sed -e "s/,//g"| sed -e "s/:/\t/g" |  sed -e "s/}//g" | sed -e "s/{//g" | grep -v genomic_consensus.task_options.track_description > ${REPORT_TMP}/parameters.txt
+grep -A 1 '"id":'  ${PACBIO_JOB_DIR8}/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART2}/pbscala-job.stdout | awk -F":" '{print $2}' |  tr ",\n" "\t" | awk '{for (i=1;i<=NF;i++) {if(i%2 !=0) {print $i"\t"$(i+1)}}}' > ${REPORT_TMP}/parameters.txt
 python tsv2html_colorless.py ${REPORT_TMP}/parameters.txt ${REPORT_TMP}/parameters_html.txt 
 
 #processing realignment report
-grep -A 1 "name" ${HGAP_HTRL_FOLDER}/falcon_ns2.tasks.task_report_preassembly_yield.html | awk -F ":" '{print $2}' | awk -v RS=",\n" -v ORS="\t" '1' | sed 's/"//g' | awk -v RS="\n\n" -v ORS="\n" '1' > ${REPORT_TMP}/pre_assembly_report.txt
+grep -A 1 '"name":'  ${PREASSEMBLE_REPORT} | awk -F":" '{print $2}' |  tr "\n" "\t" | awk -F"\t" '{for (i=1;i<=NF;i++) {if(i%3 ==1) {print $i"\t"$(i+1)}}}' > ${REPORT_TMP}/pre_assembly_report.txt
 
 #start building html report
 echo "<html><body>" > $HTML_REPORT

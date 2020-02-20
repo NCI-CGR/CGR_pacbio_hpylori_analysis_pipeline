@@ -1,5 +1,4 @@
 #!/bin/bash
-
 . ./global_bash_config.rc
 module load bwa/0.7.15 canu/1.5 prodigal/2.6.3 SPAdes/3.10.1 MUMmer/3.23 python python3
 
@@ -10,15 +9,36 @@ PROCESSED_HGAP_DIR=${ORIGINAL_FASTQ_DIR}/../processed_hgap
 FINAL_FASTA_NAME=$(echo $PROCESSED_HGAP_DIR |cut -f7 -d/ | cut -f1 -d_)
 SAMPLE_NAME=$(echo $PROCESSED_HGAP_DIR |cut -f7 -d/ | cut -f1-3 -d_)
 HGAP_ANALYSISID=$(echo $ORIGINAL_FASTQ_DIR | rev | cut -f1 -d_ | rev)
-HGAP_ANALYSISID_PART1_PRE=$(echo $HGAP_ANALYSISID | rev | cut -c4- | rev )
-HGAP_ANALYSISID_PART1=$(printf "%03d\n" $HGAP_ANALYSISID_PART1_PRE)
-HGAP_ANALYSISID_PART2=$(echo $HGAP_ANALYSISID | rev | cut -c1-3 | rev)
+FIXSTART_SEQ=nusBx_rev.fa
+#pacbio job path is always changing, get the length of jobid and append correct number of 0s to the job id to locate the file path
+NUM=$(echo -n $HGAP_ANALYSISID | wc -c)
+DOT=""
+for j in seq 1 $NUM;do DOT="${DOT}.";done
+HGAP_ANALYSISID_PART2=$(echo $JOB_PATH_LEN | sed "s/$DOT$/$HGAP_ANALYSISID/")
+echo $HGAP_ANALYSISID_PART2
+HGAP_ANALYSISID_PART1=$(echo $HGAP_ANALYSISID_PART2 | cut -c1-7)
+echo $HGAP_ANALYSISID_PART1
+REAL_JOB_DIR=$(readlink ${PACBIO_JOB_DIR8}/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART2}/cromwell-job)
+#get the coverage plot directory
+ANALYSIS_TYPE=$(dirname ${REAL_JOB_DIR} | xargs basename)
+if [[ $ANALYSIS_TYPE == pb_assembly_microbial ]]; then
+	COVP_DIR=$(ls -d ${REAL_JOB_DIR}/call-mapping_all/RaptorGraphMapping/*/call-coverage_report/execution/)
+elif [[ $ANALYSIS_TYPE == pb_hgap4 ]]; then
+	COVP_DIR=${REAL_JOB_DIR}/call-coverage_report/execution/
+fi
+
 STEP3_WORKING_FLAG=${ORIGINAL_FASTQ_DIR}/../../logs/step3_format_hgap.working
 STEP3_DONE_FLAG=${ORIGINAL_FASTQ_DIR}/../../logs/step3_format_hgap.done
 
 touch $STEP3_WORKING_FLAG
 rm -r ${PROCESSED_HGAP_DIR}/ 
 mkdir -p $PROCESSED_HGAP_DIR 2>/dev/null
+
+#split contigs into separate file
+CMD="python split_ref_fasta.py $ORIGINAL_FASTQ $PROCESSED_HGAP_DIR"
+echo $CMD
+eval $CMD
+
 
 echo "###########################"
 echo "Reformatting chromosomal contig."
@@ -27,8 +47,9 @@ echo "###########################"
 #assume the largest contig is the bacteria contig
 #for cases bacteria contig not in 1 piece, mannual lable the smaller piece as chr instead of plasmid
 BAC_CHR=$(cat $ORIGINAL_FASTQ | awk '/^>/ {if(N>0) printf("\n"); printf("%s\t",$0);N++;next;} {printf("%s",$0);} END {if(N>0) printf("\n");}' |awk -F "\t" '{printf("%s\t%d\n",$1,length($2));}' |sort -n -k2 | tail -1 | cut -f1 |  sed s'/>//'| sed s'/|arrow//')
-cp ${PACBIO_JOB_DIR}/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART1}${HGAP_ANALYSISID_PART2}/html/images/pbreports.tasks.coverage_report_hgap/coverage_plot_${BAC_CHR}.png ${PROCESSED_HGAP_DIR}/../../Report
 
+mv ${PROCESSED_HGAP_DIR}/${BAC_CHR}\|arrow*.fa ${PROCESSED_HGAP_DIR}/000000Farrow.fa
+cp ${COVP_DIR}/coverage_plot_${BAC_CHR}.png ${PROCESSED_HGAP_DIR}/../../Report
 
 #check if chromosomal contig is circularized, otherwise, use the chromosomal contig from reseq pipeline. 
 CIRCULAR_CHROMOSOMAL=$(grep "${BAC_CHR}|arrow" ${ORIGINAL_FASTQ_DIR}/04.merge.circularise_details.log | grep 'Circularized: no' | wc -l)
@@ -39,7 +60,15 @@ if [[ $CIRCULAR_CHROMOSOMAL -gt 0 ]];then
 	if [[ $RESEQ_CIRCULAR_CHROMOSOMAL -gt 0 ]];then 
 		ORIGINAL_FASTQ=${RESEQUENCE_FASTQ_DIR}/05.clean.fasta
 		BAC_CHR=$RESEQ_BAC_CHR
-		ORIGINAL_FASTQ_DIR=${RESEQUENCE_FASTQ_DIR}
+#if using plasmid from reseq assenble result, uncomment the following line to change fastq directory for plasmid format
+#		ORIGINAL_FASTQ_DIR=${RESEQUENCE_FASTQ_DIR}
+        CMD="python split_ref_fasta.py ${RESEQUENCE_FASTQ_DIR}/05.clean.fasta ${RESEQUENCE_FASTQ_DIR}"
+		echo $CMD
+		eval $CMD
+		
+		#use the bacteria chr contig in reseq pipeline to replace original uncircular chr contig.
+		mv ${PROCESSED_HGAP_DIR}/${BAC_CHR}\|arrow*.fa ${PROCESSED_HGAP_DIR}/000000Farrow.fa
+		
 		echo "${RESEQUENCE_FASTQ_DIR}/05.clean.fasta is circularized."
 	else
 		echo "${PROCESSED_HGAP_DIR}/${FINAL_FASTA_NAME}_chromosomal.fasta is not circularized."
@@ -51,21 +80,18 @@ else
 fi
 
 
-#split contigs into separate file
-CMD="python split_ref_fasta.py $ORIGINAL_FASTQ $PROCESSED_HGAP_DIR"
-echo $CMD
-eval $CMD
-
-mv ${PROCESSED_HGAP_DIR}/${BAC_CHR}\|arrow*.fa ${PROCESSED_HGAP_DIR}/000000Farrow.fa
-echo "###adding sample name to contig name ${SAMPLE_NAME}."
 sed -i "s/>/>${SAMPLE_NAME}_/" ${PROCESSED_HGAP_DIR}/000000Farrow.fa #add sample name to fasta contig name
+
 #elif [[ -s ${PROCESSED_HGAP_DIR}/0\|arrow.fa ]];then
 #	mv ${PROCESSED_HGAP_DIR}/0\|arrow.fa ${PROCESSED_HGAP_DIR}/000000Farrow.fa
-#	cp ${PACBIO_JOB_DIR}/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART1}${HGAP_ANALYSISID_PART2}/html/images/pbreports.tasks.coverage_report_hgap/coverage_plot_0.png ${PROCESSED_HGAP_DIR}/../../Report
+#	cp COVP_DIR/coverage_plot_0.png ${PROCESSED_HGAP_DIR}/../../Report
 #fi
 
-CMD="circlator fixstart --genes_fa nusBx_rev.fa ${PROCESSED_HGAP_DIR}/000000Farrow.fa ${PROCESSED_HGAP_DIR}/000000F.fixstart"
-#CMD="circlator fixstart --genes_fa CS_nusBx_rev.fa ${PROCESSED_HGAP_DIR}/000000Farrow.fa ${PROCESSED_HGAP_DIR}/000000F.fixstart"
+#match species specific nuxB gene fasta file for non-hpylori
+#VIAL_NAME=$(echo ${SAMPLE_NAME} | cut -f1 -d_)
+#for i in *.fa;do NAME=$(basename $i .fa);if [[ $VIAL_NAME == ${NAME}* ]]; then FIXSTART_SEQ=${i};fi;done
+
+CMD="circlator fixstart --genes_fa ${FIXSTART_SEQ} ${PROCESSED_HGAP_DIR}/000000Farrow.fa ${PROCESSED_HGAP_DIR}/000000F.fixstart"
 echo $CMD
 eval $CMD
 
@@ -155,13 +181,13 @@ else
 		if [[ $CIRCULAR_PLASMID -gt 0 ]];then 
 			echo "$i is circularized plasmid and included."
 			cp $i ${PROCESSED_HGAP_DIR}/${FINAL_FASTA_NAME}_${IMAGE_NAME}_plasmid.fasta
-			cp ${PACBIO_JOB_DIR}/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART1}${HGAP_ANALYSISID_PART2}/html/images/pbreports.tasks.coverage_report_hgap/coverage_plot_${IMAGE_NAME}.png ${PROCESSED_HGAP_DIR}/../../Report
+			cp ${COVP_DIR}/coverage_plot_${IMAGE_NAME}.png ${PROCESSED_HGAP_DIR}/../../Report
 			cat ${PROCESSED_HGAP_DIR}/basecall_ref.fasta $i > ${PROCESSED_HGAP_DIR}/basecall_ref.tmp.fasta
 			mv ${PROCESSED_HGAP_DIR}/basecall_ref.tmp.fasta ${PROCESSED_HGAP_DIR}/basecall_ref.fasta
 		elif [[ $UNCIRCULAR_PLASMID -gt 0 ]];then 
 			echo "$i is uncircularized plasmid to include mannualy."
 			cp $i ${PROCESSED_HGAP_DIR}/${FINAL_FASTA_NAME}_${IMAGE_NAME}_plasmid_NC.fasta
-			cp ${PACBIO_JOB_DIR}/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART1}${HGAP_ANALYSISID_PART2}/html/images/pbreports.tasks.coverage_report_hgap/coverage_plot_${IMAGE_NAME}.png ${PROCESSED_HGAP_DIR}/../../Report
+			cp ${COVP_DIR}/coverage_plot_${IMAGE_NAME}.png ${PROCESSED_HGAP_DIR}/../../Report
 			cat ${PROCESSED_HGAP_DIR}/basecall_ref.fasta $i > ${PROCESSED_HGAP_DIR}/basecall_ref.tmp.fasta
 			mv ${PROCESSED_HGAP_DIR}/basecall_ref.tmp.fasta ${PROCESSED_HGAP_DIR}/basecall_ref.fasta
 

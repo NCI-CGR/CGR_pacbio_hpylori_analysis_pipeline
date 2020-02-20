@@ -17,6 +17,7 @@ configfile: "config.yaml"
 
 SAMPLE_NAME = config['SAMPLE_NAME']
 JOB_NUM = config['JOB_NUM']
+Fix_Pro = config['Fix_Protein']
 
 rule all:
     input:
@@ -29,10 +30,11 @@ rule fixstart:
     output:
         expand('/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/assembly{job}.fixstart.fasta', sample = SAMPLE_NAME, job = JOB_NUM)
     params:
-        prefix = expand('/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/assembly{job}.fixstart', sample = SAMPLE_NAME, job = JOB_NUM)        
+        prefix = expand('/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/assembly{job}.fixstart', sample = SAMPLE_NAME, job = JOB_NUM),        
+        fix_pro = Fix_Pro
     shell:
         '. /etc/profile.d/modules.sh; module load samtools python python3 SPAdes/3.7.1 canu/1.5 bwa/0.7.15 prodigal/2.6.3 MUMmer/3.23;'
-        'circlator fixstart --genes_fa ../nusBx_rev.fa {input} {params.prefix}'
+        'circlator fixstart --genes_fa {params.fix_pro} {input} {params.prefix}'
 
 rule fasta_to_reference:
     input:
@@ -41,28 +43,32 @@ rule fasta_to_reference:
     output:
         expand('/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/resequence_run/referenceset.xml', sample = SAMPLE_NAME)
     params:
-        'resequence_run'        
+        outdir = 'resequence_run' ,
+        smrtcmds = config['Smrtcmds']        
     shell:
-        'rm -R {input.dir}/resequence_run/;/DCEG/CGF/Resources/PacBio/smrtlink/smrtcmds/bin/fasta-to-reference {input.contig} {input.dir} {params} --organism Hpylori'
+        'rm -R {input.dir}/resequence_run/;{params.smrtcmds}fasta-to-reference {input.contig} {input.dir} {params.outdir} --organism Hpylori'
 		
 rule resequence:
     input:	
         ref = '/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/resequence_run/referenceset.xml'		
     output:
-        '/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/resequence_run/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta'
+#        '/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/resequence_run/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta'
+        '/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/resequence_run/tasks/genomic_consensus.tasks.gcpp-0/consensus.fasta'
     params:
         outdir = '/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/resequence_run',
         dataset = expand('/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/file{job}.subreadset.xml', sample = SAMPLE_NAME, job = JOB_NUM),
-        json = config['Resequence_JSON']
+        json = config['Resequence_JSON'],
+        smrtcmds = config['Smrtcmds']
     threads:
         1
     shell:
-        '/CGF/Resources/PacBio/smrtlink/current/bundles/smrttools/smrtcmds/bin/pbsmrtpipe pipeline-id pbsmrtpipe.pipelines.sa3_ds_resequencing_fat -e eid_ref_dataset:{input.ref} -e eid_subread:{params.dataset} --preset-json={params.json} --output-dir={params.outdir}'
+        '. /etc/profile.d/modules.sh; module load sge;'
+        '{params.smrtcmds}pbsmrtpipe pipeline-id pbsmrtpipe.pipelines.sl_resequencing2 -e eid_ref_dataset:{input.ref} -e eid_subread:{params.dataset} --preset-json={params.json} --output-dir={params.outdir} --local-only'
 
 rule dnadiff:
     input:
         old = expand('/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/circlator_{job}/00.input_assembly.fasta', sample = SAMPLE_NAME, job = JOB_NUM),
-        new = '/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/resequence_run/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta'
+        new = '/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/resequence_run/tasks/genomic_consensus.tasks.gcpp-0/consensus.fasta'
     output:
         '/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/old_vs_new.delta'
     params:
@@ -74,7 +80,7 @@ rule dnadiff:
 		
 rule circlator:
     input:
-        assembly = expand('/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/resequence_run/tasks/pbcoretools.tasks.gather_contigset-1/file.contigset.fasta', sample = SAMPLE_NAME),
+        assembly = expand('/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/resequence_run/tasks/genomic_consensus.tasks.gcpp-0/consensus.fasta', sample = SAMPLE_NAME),
         preadsfasta = expand('/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/preads4falcon.fasta', sample = SAMPLE_NAME)
     output:
         expand('/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/{sample}/HGAP_run/Resequence/circlator/04.merge.circularise_details.log', sample = SAMPLE_NAME)

@@ -6,7 +6,10 @@ ROOT_DIR=/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run
 #CONSOLIDATED_XML=${ROOT_DIR}/consolidated_xml
 #SPLITTED_XML=${ROOT_DIR}/splitted_xml
 PACBIO_JOB_DIR=/CGF/Resources/PacBio/jobs
+PACBIO_JOB_DIR8=/CGF/Resources/PacBio/jobs/0000
+JOB_PATH_LEN=000000000
 SMRTCMDS=/CGF/Resources/PacBio/smrtlink/current/bundles/smrttools/smrtcmds/bin
+SMRTCMDS7=/CGF/Resources/PacBio/smrtlink/install/smrtlink-release_7.0.0.63985/bundles/smrttools/install/smrttools-release_7.0.0.63823/smrtcmds/bin/
 QUEUE=long.q
 
 
