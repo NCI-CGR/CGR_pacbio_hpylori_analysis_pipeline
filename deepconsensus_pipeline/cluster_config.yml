@@ -1,0 +1,15 @@
+# cluster_config.yml - cluster configuration
+__default__:
+    account: luow2
+    partition: defq
+    time: 48:00:00 # time limit for each job
+    ntasks-per-node: 2 #Request n cores be allocated per node.
+    #output: snakejob-%j.out
+    #error: snakejob-%j.err
+
+run_deepconsensus:
+    account: luow2
+    partition: defq
+    ntasks-per-node: 14
+    output: run_deepconsensus-%j.out
+    error: run_deepconsensus-%j.err

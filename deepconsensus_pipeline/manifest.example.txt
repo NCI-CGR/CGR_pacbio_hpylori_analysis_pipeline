@@ -1,0 +1,5 @@
+K28_SC880216_10101	/DCEG/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/K28_SC880216_10101/K28_SC880216_bc1007.bam
+HP97_SC882350_10137	/DCEG/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/HP97_SC882350_10137/HP97_SC882350_bc1033.bam
+CHI-204_SC768124_10145	/DCEG/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/CHI-204_SC768124_10145/demultiplex.bc1065--bc1065.subreads.bam
+CHI-210_SC762076_10146	/DCEG/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/CHI-210_SC762076_10146/demultiplex.bc1046--bc1046.subreads.bam
+CAN-025_SC762066_10147	/DCEG/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/CAN-025_SC762066_10147/demultiplex.bc1033--bc1033.subreads.bam

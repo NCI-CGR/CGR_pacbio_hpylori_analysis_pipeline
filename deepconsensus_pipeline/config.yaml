@@ -1,0 +1,9 @@
+manifest: manifest_NP0454_042.txt
+#/DCEG/CGF/Bioinformatics/Production/Wen/20230213_HpGP_phase2/Manifest/Manifest-NP0454-042.txt 
+#manifest_NP0454_042.txt
+DIR: /DCEG/CGF/Bioinformatics/Production/Wen/20230213_HpGP_phase2/
+smrtcomds: /DCEG/CGF/Resources/PacBio/smrtlink/current/smrtcmds/bin/
+model: /DCEG/CGF/Bioinformatics/Production/Wen/git/deepconsensus/deepconsensus_quick_start/model/checkpoint
+
+subreads: /DCEG/CGF/Resources/PacBio/jobs/0000/0000011/0000011629/entry-points/f3d3d24f/m64159_230204_192708.subreadset.xml
+barcodes: /mnt/nfs/gigantor/ifs/DCEG/CGF/Resources/PacBio/jobs/cromwell-executions/sl_import_fasta_barcodes/456046bd-ead5-4ee2-aad7-22bc1c855f6e/call-fasta_to_barcodes/execution/barcodes.fasta       

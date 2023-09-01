@@ -1,0 +1,200 @@
+#!/bin/bash
+
+os=$(lsb_release -a | grep Distributor)
+
+if [[ $os == *CentOS* ]]; then 
+	module load bwa/0.7.15 canu/1.5 prodigal/2.6.3 SPAdes/3.7.1 MUMmer/3.23 python samtools python3 sge tabix R blast
+fi
+
+if [[ $os == *Ubuntu* ]]; then 
+	module load bwa/0.7.17 canu/2.2 prodigal/2.6.3 spades/3.15.4 mummer/4.0.0 samtools slurm tabix python3/3.10.2 R blast/2.13.0
+fi	
+
+
+ROOT_DIR=/DCEG/CGF/Bioinformatics/Production/Wen/20230213_HpGP_phase2
+#CONSOLIDATED_XML=${ROOT_DIR}/consolidated_xml
+#SPLITTED_XML=${ROOT_DIR}/splitted_xml
+PACBIO_JOB_DIR=/DCEG/CGF/Resources/PacBio/jobs
+PACBIO_JOB_DIR8=/DCEG/CGF/Resources/PacBio/jobs/0000
+JOB_PATH_LEN=0000000000
+SMRTCMDS=/DCEG/CGF/Resources/PacBio/smrtlink/current/bundles/smrttools/smrtcmds/bin
+SMRTCMDS7=/DCEG/CGF/Resources/PacBio/smrtlink/install/smrtlink-release_7.0.0.63985/bundles/smrttools/install/smrttools-release_7.0.0.63823/smrtcmds/bin/
+SMRTCMDS10=/DCEG/CGF/Resources/PacBio/smrtlink/install/smrtlink-release_10.1.0.119588/smrtcmds/bin/
+QUEUE=seq-*.q
+
+
+SCRIPT_DIR=/home/luow2/20180220_test_hgap_run/
+HGAP_JSON=${SCRIPT_DIR}/preset_hgap.json
+BASEMOD_JSON=${SCRIPT_DIR}/preset_basemod.json
+FIXSTART_SEQ=~/20180220_test_hgap_run/nusBx_rev.fa
+
+DELIVERY_DIR=/DCEG/Projects/DataDelivery/hpylori
+
+######################################MODULE############################################
+
+#blastn check module, input requires checking fasta and output file.
+run_blastn() {
+	source ~/$USER/conda/etc/profile.d/conda.sh
+	conda activate hpylori;    
+	CMD="blastn -db nt -query ${1} -remote -out ${2} -sorthits 4 -num_alignments 50"
+	echo $CMD
+	eval $CMD
+	conda deactivate
+
+}
+
+#nucmer and dotplot self repeat check, input requires checking fasta file. Output will be in the same folder as input fasta.
+repeat_check() {
+	if [[ $# -eq 1 ]]; then
+		PLA_DIR=$(dirname $1)
+	elif [[ $# -eq 2 ]];then
+		PLA_DIR=$2
+	else
+		echo "Accepting only 1 or 2 parameter! Check your input parameters!"
+	fi	
+		
+	PLA=$(basename $1 .fasta)
+	
+	nucmer --maxmatch --nosimplify $1 $1 -p ${PLA_DIR}/${PLA}.repeats
+    show-coords -r ${PLA_DIR}/${PLA}.repeats.delta > ${PLA_DIR}/${PLA}.repeats.coords	
+	echo "mummerplot --png -p ${PLA_DIR}/${PLA}_mummerplot ${PLA_DIR}/${PLA}.repeats.delta -R $1 -Q $1;"
+	mummerplot --png -p ${PLA_DIR}/${PLA}_mummerplot ${PLA_DIR}/${PLA}.repeats.delta -R $1 -Q $1;
+	
+}
+
+contig_comparison() {
+	#3 input: 1,fasta1; 2,fasta2; 3,outputDir
+	CONTIG1=$(basename $1 .fasta)
+	CONTIG2=$(basename $2 .fasta)
+	
+	dnadiff $1 $2 -p ${3}/${CONTIG1}-vs-${CONTIG2}
+    show-coords -r ${3}/${CONTIG1}-vs-${CONTIG2}.delta > ${3}/${CONTIG1}-vs-${CONTIG2}.coords	
+	echo "mummerplot --png -p ${3}/${CONTIG1}-vs-${CONTIG2}_mummerplot ${3}/${CONTIG1}-vs-${CONTIG2}.delta -R $1 -Q $2;"
+	mummerplot --png -p ${3}/${CONTIG1}-vs-${CONTIG2}_mummerplot ${3}/${CONTIG1}-vs-${CONTIG2}.delta -R $1 -Q $2
+}
+
+#circlator need 3 inputs: input fasta, assemble reads, output directory
+run_circlator () {
+    rm -R ${3} 2>/dev/null
+	echo "circlator all --merge_min_length_merge 1000 ${1} ${2} ${3}"
+    circlator all --merge_min_length_merge 1000 ${1} ${2} ${3}
+}
+
+run_fixstart() {
+
+	if [[ ${3} -eq 0 ]];then 
+		printf 'N%.0s' {1..100} >> ${2}/000000Farrow.fa
+	fi
+	
+	CMD="circlator fixstart --genes_fa ${FIXSTART_SEQ} ${1} ${2}/000000F.fixstart"
+	echo $CMD
+	eval $CMD
+
+	#check if fixstart finish successfully
+
+	FIXSTART_LOG=$(grep 'No sequences left for which to look for genes using prodigal' ${2}/000000F.fixstart.detailed.log | wc -l)
+
+	if [[ $FIXSTART_LOG -gt 0 ]];then
+		echo "fixstart of ${1} finished!"
+	else
+		echo "fixstart of ${1} failed!"
+		#exit 1
+	fi
+
+}
+
+
+#prokka annoation check, input requires checking fasta file, sample name and output folder
+run_prokka() {
+	#. /DCEG/Resources/Tools/miniconda/miniconda3/etc/profile.d/conda.sh; 
+	source ~/$USER/conda/etc/profile.d/conda.sh
+	#conda activate /home/luow2/.conda/envs/envname;
+	conda activate hpylori;
+	
+	prokka ${1} --outdir ${3} --prefix ${2} --force --proteins ~/20180220_test_hgap_run/NCBI_26695/Hp26695.faa --centre X --compliant
+	
+	psuedo=$(perl /home/luow2/20180220_test_hgap_run/prokka_suggest_pseudo.pl ${3}/${2}.faa | tail -1 | cut -f2 -d:)
+	gene=$(grep gene ${3}/${2}.txt | cut -f2 -d:)
+	cds=$(grep CDS  ${3}/${2}.txt | cut -f2 -d:); 
+	rRNA=$(grep rRNA ${3}/${2}.txt | cut -f2 -d:); 
+	tRNA=$(grep tRNA ${3}/${2}.txt | cut -f2 -d:)
+	psuedoFrac=`echo "$psuedo/$cds" | bc -l | xargs -I {} printf "%5.4f" {}`
+	vacA=`grep 'product=Vacuolating cytotoxin VacA' ${3}/${2}.gff |wc -l`
+	
+	conda deactivate	
+}
+
+run_busco() {
+	#. /DCEG/Resources/Tools/miniconda/miniconda3/etc/profile.d/conda.sh; 
+	source ~/$USER/conda/etc/profile.d/conda.sh
+	#conda activate /home/luow2/.conda/envs/envname;
+	conda activate busco
+	
+	DIR=$(dirname $1)
+	NAME=$(basename $1 .fasta)
+	busco -m genome -i $1 -o ${NAME} -l campylobacterales_odb10 -f --out_path ${DIR}
+
+	#rm -R ./${NAME}/
+	
+	conda deactivate
+}
+
+	
+#resequece will remap the raw reads to the assembly
+run_resequence() {
+    #3 inputs: 1,outputDir; 2,assembly; 3,SMRTLINK job ID
+	if [[ ${3} -gt 3661 ]]; then
+		#pacbio job path is always changing, get the length of jobid and append correct number of 0s to the job id to locate the file path
+		NUM=$(echo -n $3 | wc -c)
+		DOT=""
+		for j in seq 1 $NUM;do DOT="${DOT}.";done
+		HGAP_ANALYSISID_PART2=$(echo $JOB_PATH_LEN | sed "s/$DOT$/$3/")
+		HGAP_ANALYSISID_PART1=$(echo $HGAP_ANALYSISID_PART2 | cut -c1-7)
+		REAL_JOB_DIR=$(readlink ${PACBIO_JOB_DIR8}/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART2}/cromwell-job)
+
+		#if the subreads comes from multiple smrtcell, it will be the eid_subread_merged.subreadset.xml
+		if [[ -f /CGF/Resources/PacBio/jobs/0000/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART2}/merge-datasets/outputs/merged.subreadset.xml ]]; then 
+			SUBREADS_XML=/CGF/Resources/PacBio/jobs/0000/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART2}/merge-datasets/outputs/merged.subreadset.xml
+		else
+			SUBREADS_XML=$(ls /CGF/Resources/PacBio/jobs/0000/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART2}/entry-points/*.subreadset.xml)
+		fi
+	else 
+		HGAP_ANALYSISID_PART1_PRE=$(echo $3 | rev | cut -c4- | rev )
+		HGAP_ANALYSISID_PART1=$(printf "%03d\n" $HGAP_ANALYSISID_PART1_PRE)
+		HGAP_ANALYSISID_PART2=$(echo $3 | rev | cut -c1-3 | rev)
+
+		if [[ -f /CGF/Resources/PacBio/jobs/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART1}${HGAP_ANALYSISID_PART2}/eid_subread_merged.subreadset.xml ]]; then 
+			SUBREADS_XML=/CGF/Resources/PacBio/jobs/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART1}${HGAP_ANALYSISID_PART2}/eid_subread_merged.subreadset.xml
+		else
+			SUBREADS_XML=$(ls /CGF/Resources/PacBio/jobs/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART1}${HGAP_ANALYSISID_PART2}/entry-points/*.subreadset.xml)
+		fi
+	fi
+	
+    rm -R  ${1}/_basecall_ref 2>/dev/null
+	
+	samtools faidx ${2}
+	CMD="${SMRTCMDS7}/fasta-to-reference ${2} ${1} _basecall_ref"
+	echo $CMD
+	eval $CMD
+	
+	CMD="${SMRTCMDS}/pbcromwell run pb_resequencing -e ${1}/_basecall_ref/referenceset.xml -e ${SUBREADS_XML} --output-dir ${1}/../Resequence --overwrite"
+	echo $CMD
+	eval $CMD
+	
+	if [[ $? -ne 0 ]]; then
+		echo "Error: Resequencing is failed!"
+		exit 1
+	fi
+}
+
+run_hifiasm_general(){
+    #required input: hifi reads in fastq format
+    SAMP=$(basename $1 .fastq) 
+    echo $SAMP
+    ROOT_DIR=$(dirname $1)
+    mkdir -p ${ROOT_DIR}/hifiasm_out/2>/dev/null
+    /home/luow2/tools/hifiasm/hifiasm -o ${ROOT_DIR}/hifiasm_out/${SAMP}.asm -t 4 ${1}
+    awk '{if($1=="S" && int(substr($5,6))>15){print ">"$2"\t"$5"\n"$3}}' ${ROOT_DIR}/hifiasm_out/${SAMP}.asm.p_ctg.gfa > ${ROOT_DIR}/hifiasm_out/${SAMP}.asm.fasta
+
+
+}
