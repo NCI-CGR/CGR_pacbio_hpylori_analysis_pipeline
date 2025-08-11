@@ -1,26 +1,40 @@
 #!/bin/bash
+#set -e pipefail
+
 . ./global_bash_config.rc
 
+#SBATCH --open-mode=append
 SAMP=$1
 HGAP_ANALYSISID=$2
 
 
 run_ccs () {
-    if [[ -f /CGF/Resources/PacBio/jobs/0000/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART2}/merge-datasets/outputs/merged.subreadset.xml ]]; then 
-	    SUBREADS_XML=/CGF/Resources/PacBio/jobs/0000/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART2}/merge-datasets/outputs/merged.subreadset.xml
+    if [[ -f /DCEG/CGF/Resources/PacBio/jobs/0000/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART2}/merge-datasets/outputs/merged.subreadset.xml ]]; then 
+	    SUBREADS_XML=/DCEG/CGF/Resources/PacBio/jobs/0000/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART2}/merge-datasets/outputs/merged.subreadset.xml
     else
-	    SUBREADS_XML=$(ls /CGF/Resources/PacBio/jobs/0000/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART2}/entry-points/*/*.consensusreadset.xml)
+	    SUBREADS_XML=$(ls /DCEG/CGF/Resources/PacBio/jobs/0000/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART2}/entry-points/*/*.consensusreadset.xml)
     fi
     mkdir -p ${1} 
-    ${SMRTCMDS10}/dataset consolidate ${SUBREADS_XML} ${1}/ccs.bam ${1}/ccs.xml
+    #${SMRTCMDS10}/dataset consolidateq ${SUBREADS_XML} ${1}/ccs.bam ${1}/ccs.xml
+	dataset consolidate ${SUBREADS_XML} ${1}/ccs.bam ${1}/ccs.xml
 	samtools fastq ${1}/ccs.bam | bgzip > ${1}/ccs.Q20.fastq.gz
 }
 
+locate_revio_ccs() {
+	CCS_XML=$(tr "," '\n' < /DCEG/CGF/Resources/PacBio/jobs/0000/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART2}/workflow/inputs.json | grep eid_ccs | sed 's/"//g' | cut -f2 -d:)
+	CCS_BAM=$(echo $CCS_XML | sed 's/pb_formats/hifi_reads/' | sed 's/consensusreadset.xml/bam/')
+	mkdir -p ${1} 
+	echo $CCS_BAM
+	samtools fastq ${CCS_BAM} | bgzip > ${1}/ccs.Q20.fastq.gz
+	
+}
+
 run_hifiasm () {
-    mkdir -p ${ROOT_DIR}/${SAMP}/hifiasm_run/2>/dev/null
-    /home/luow2/tools/hifiasm/hifiasm -o ${ROOT_DIR}/${SAMP}/hifiasm_run/${SAMP}.asm -t 4 ${1}
+    mkdir -p ${ROOT_DIR}/${SAMP}/hifiasm_run/ 2>/dev/null
+	echo "/home/luow2/20180220_test_hgap_run/hifiasm-0.24.0/hifiasm-0.24.0/hifiasm -o ${ROOT_DIR}/${SAMP}/hifiasm_run/${SAMP}.asm. -t 4 ${1}"
+    /home/luow2/20180220_test_hgap_run/hifiasm-0.24.0/hifiasm-0.24.0/hifiasm -o ${ROOT_DIR}/${SAMP}/hifiasm_run/${SAMP}.asm -t 10 ${1}
 	#only select contig with coverage higher than 15, depth in column 5
-    awk '{if($1=="S" && int(substr($5,6))>15){print ">"$2"\t"$5"\n"$3}}' ${ROOT_DIR}/${SAMP}/hifiasm_run/${SAMP}.asm.p_ctg.gfa > ${ROOT_DIR}/${SAMP}/hifiasm_run/${SAMP}.asm.fasta
+    awk '{if($1=="S" && int(substr($5,6))>15){print ">"$2"\t"$5"\n"$3}}' ${ROOT_DIR}/${SAMP}/hifiasm_run/${SAMP}.asm.bp.p_ctg.gfa > ${ROOT_DIR}/${SAMP}/hifiasm_run/${SAMP}.asm.fasta
 }
 
 
@@ -39,20 +53,21 @@ echo $REAL_JOB_DIR
 
 ANALYSIS_TYPE=$(dirname ${REAL_JOB_DIR} | xargs basename)
 echo $ANALYSIS_TYPE
-repeat_check ${PACBIO_JOB_DIR8}/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART2}/outputs/polished_assembly.fasta ${ROOT_DIR}/${SAMP}/HGAP_run/NUCMER
+#repeat_check ${PACBIO_JOB_DIR8}/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART2}/outputs/polished_assembly.fasta ${ROOT_DIR}/${SAMP}/HGAP_run/NUCMER
 
-# echo "#####################Starting CCS and hifiasm for sample ${SAMP}#####################"
-run_ccs ${ROOT_DIR}/${SAMP}/pb_ccs
+echo "#####################Starting CCS and hifiasm for sample ${SAMP}#####################"
+#run_ccs ${ROOT_DIR}/${SAMP}/pb_ccs
+locate_revio_ccs ${ROOT_DIR}/${SAMP}/pb_ccs
 run_hifiasm ${ROOT_DIR}/${SAMP}/pb_ccs/ccs.Q20.fastq.gz
 run_circlator ${ROOT_DIR}/${SAMP}/hifiasm_run/${SAMP}.asm.fasta ${ROOT_DIR}/${SAMP}/pb_ccs/ccs.Q20.fastq.gz ${ROOT_DIR}/${SAMP}/hifiasm_run/circlator 
 
 echo "#####################Starting circlator for sample ${SAMP} raw reads assembly #####################"
 	
 if [[ $ANALYSIS_TYPE == pb_assembly_microbial ]]; then
-    PLASMID_FASTA=$(find ${REAL_JOB_DIR} -name "preads4falcon.fasta" | grep call-asm_plasmid)
+   	PLASMID_FASTA=$(find ${REAL_JOB_DIR} -name "preads4falcon.fasta" | grep call-asm_plasmid)
 	CHR_FASTA=$(find ${REAL_JOB_DIR} -name "preads4falcon.fasta" | grep call-asm_chrom | head -1)
 	BAC_CHR=$(cat ${PACBIO_JOB_DIR8}/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART2}/outputs/consensus.fasta | awk '/^>/ {if(N>0) printf("\n"); printf("%s\t",$0);N++;next;} {printf("%s",$0);} END {if(N>0) printf("\n");}' |awk -F "\t" '{printf("%s\t%d\n",$1,length($2));}' |sort -n -k2 | tail -1 | cut -f1 |  sed s'/>//' )
-    python fasta_remove.py ${PACBIO_JOB_DIR8}/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART2}/outputs/consensus.fasta "${BAC_CHR}" ${ROOT_DIR}/${SAMP}/HGAP_run/plasmid_only.fasta 
+    	python fasta_remove.py ${PACBIO_JOB_DIR8}/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART2}/outputs/consensus.fasta "${BAC_CHR}" ${ROOT_DIR}/${SAMP}/HGAP_run/plasmid_only.fasta 
 	run_circlator ${PACBIO_JOB_DIR8}/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART2}/outputs/consensus.fasta ${PLASMID_FASTA} ${ROOT_DIR}/${SAMP}/HGAP_run/circlator_${HGAP_ANALYSISID}
 	#run_circlator ${ROOT_DIR}/${SAMP}/HGAP_run/plasmid_only.fasta ${PLASMID_FASTA} ${ROOT_DIR}/${SAMP}/HGAP_run/circlator_${HGAP_ANALYSISID}_plasmid 
 
@@ -62,7 +77,8 @@ elif [[ $ANALYSIS_TYPE == pb_hgap4 ]]; then
 	run_circlator ${PACBIO_JOB_DIR8}/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART2}/outputs/consensus.fasta ${RAW_FASTA} ${ROOT_DIR}/${SAMP}/HGAP_run/circlator_${HGAP_ANALYSISID}
 elif [[ $ANALYSIS_TYPE == pb_microbial_analysis ]]; then
 	BAC_CHR=$(cat ${PACBIO_JOB_DIR8}/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART2}/outputs/polished_assembly.fasta | awk '/^>/ {if(N>0) printf("\n"); printf("%s\t",$0);N++;next;} {printf("%s",$0);} END {if(N>0) printf("\n");}' |awk -F "\t" '{printf("%s\t%d\n",$1,length($2));}' |sort -n -k2 | tail -1 | cut -f1 |  sed s'/>//' )
-    python fasta_remove.py ${PACBIO_JOB_DIR8}/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART2}/outputs/polished_assembly.fasta "${BAC_CHR}" ${ROOT_DIR}/${SAMP}/HGAP_run/plasmid_only.fasta 
+        python fasta_remove.py ${PACBIO_JOB_DIR8}/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART2}/outputs/polished_assembly.fasta "${BAC_CHR}" ${ROOT_DIR}/${SAMP}/HGAP_run/plasmid_only.fasta 
+	#samtools fastq ${ROOT_DIR}/${SAMP}/hifiasm_run/${SAMP}_ccs.bam | bgzip > ${ROOT_DIR}/${SAMP}/pb_ccs/ccs.Q20.fastq.gz
 	run_circlator ${PACBIO_JOB_DIR8}/${HGAP_ANALYSISID_PART1}/${HGAP_ANALYSISID_PART2}/outputs/polished_assembly.fasta ${ROOT_DIR}/${SAMP}/pb_ccs/ccs.Q20.fastq.gz ${ROOT_DIR}/${SAMP}/HGAP_run/circlator_${HGAP_ANALYSISID}
 
 else
@@ -70,16 +86,15 @@ else
 fi
 
 
-echo "#####################Starting prokka annotation sample ${SAMP}#####################"
+# echo "#####################Starting prokka annotation sample ${SAMP}#####################"
 
 
-run_prokka ${ROOT_DIR}/${SAMP}/HGAP_run/circlator_${HGAP_ANALYSISID}/06.fixstart.fasta ${SAMP} ${ROOT_DIR}/${SAMP}/HGAP_run/prokka_protein
-echo -e "${gene}\t${cds}\t${rRNA}\t${tRNA}\t${psuedoFrac}" > ${ROOT_DIR}/${SAMP}/Report/temp/raw_assemble_annotation.txt
+# run_prokka ${ROOT_DIR}/${SAMP}/HGAP_run/circlator_${HGAP_ANALYSISID}/06.fixstart.fasta ${SAMP} ${ROOT_DIR}/${SAMP}/HGAP_run/prokka_protein
+# echo -e "${gene}\t${cds}\t${rRNA}\t${tRNA}\t${psuedoFrac}" > ${ROOT_DIR}/${SAMP}/Report/temp/raw_assemble_annotation.txt
 
-run_prokka ${ROOT_DIR}/${SAMP}/hifiasm_run/circlator/06.fixstart.fasta ${SAMP} ${ROOT_DIR}/${SAMP}/hifiasm_run/prokka_protein
-echo -e "${gene}\t${cds}\t${rRNA}\t${tRNA}\t${psuedoFrac}" > ${ROOT_DIR}/${SAMP}/Report/temp/hifi_assemble_annotation.txt
+# run_prokka ${ROOT_DIR}/${SAMP}/hifiasm_run/circlator/06.fixstart.fasta ${SAMP} ${ROOT_DIR}/${SAMP}/hifiasm_run/prokka_protein
+# echo -e "${gene}\t${cds}\t${rRNA}\t${tRNA}\t${psuedoFrac}" > ${ROOT_DIR}/${SAMP}/Report/temp/hifi_assemble_annotation.txt
 
 
 chmod 777 ${ROOT_DIR}/${SAMP}/logs/step2_circlator.working 	
 mv ${ROOT_DIR}/${SAMP}/logs/step2_circlator.working ${ROOT_DIR}/${SAMP}/logs/step2_circlator.done
-

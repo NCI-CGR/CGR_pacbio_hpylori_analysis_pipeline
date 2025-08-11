@@ -12,7 +12,7 @@ fi
 ORIGINAL_FASTQ_DIR=$(dirname $ORIGINAL_FASTQ)
 RESEQUENCE_FASTQ_DIR=${ORIGINAL_FASTQ_DIR}/../Resequence/circlator
 PROCESSED_HGAP_DIR=${ORIGINAL_FASTQ_DIR}/../processed_hgap
-FINAL_FASTA_NAME=$(dirname $ORIGINAL_FASTQ_DIR | xargs dirname | xargs basename | cut -f1 -d_)
+FINAL_FASTA_NAME=$(dirname $ORIGINAL_FASTQ_DIR | xargs dirname | xargs basename | rev | cut -f3- -d_ | rev)
 SAMPLE_NAME=$(dirname $ORIGINAL_FASTQ_DIR | xargs dirname | xargs basename)
 HGAP_ANALYSISID=$(echo $ORIGINAL_FASTQ_DIR | rev | cut -f3 -d/ | cut -f1 -d_ | rev)
 FIXSTART_SEQ=nusBx_rev.fa
@@ -99,6 +99,7 @@ if [[ -z ${noChr} ]]; then
 
 	#compare 26695 to the chr contig
 	dnadiff ${PROCESSED_HGAP_DIR}/../../HGAP_run/processed_hgap/000000F.fixstart.fasta ${PROCESSED_HGAP_DIR}/000000F.fixstart.fasta -p ${PROCESSED_HGAP_DIR}/raw_vs_hifi
+	echo "mummerplot --png -p ${PROCESSED_HGAP_DIR}/raw_vs_hifi_mummerplot ${PROCESSED_HGAP_DIR}/raw_vs_hifi.delta -R ${PROCESSED_HGAP_DIR}/../../HGAP_run/processed_hgap/000000F.fixstart.fasta -Q ${PROCESSED_HGAP_DIR}/000000F.fixstart.fasta"
 	mummerplot --png -p ${PROCESSED_HGAP_DIR}/raw_vs_hifi_mummerplot ${PROCESSED_HGAP_DIR}/raw_vs_hifi.delta -R ${PROCESSED_HGAP_DIR}/../../HGAP_run/processed_hgap/000000F.fixstart.fasta -Q ${PROCESSED_HGAP_DIR}/000000F.fixstart.fasta
 
 	#mv the last 12 letters to the head
@@ -118,12 +119,16 @@ if [[ -z ${noChr} ]]; then
 
     echo "#####################Starting annotation for sample ${SAMPLE_NAME}#####################"
 	
-	run_prokka ${PROCESSED_HGAP_DIR}/${FINAL_FASTA_NAME}_chromosomal.fasta ${SAMPLE_NAME} ${ROOT_DIR}/${SAMPLE_NAME}/deepconsensus/prokka_protein
+	run_prokka ${PROCESSED_HGAP_DIR}/${FINAL_FASTA_NAME}_chromosomal.fasta ${SAMPLE_NAME} ${ROOT_DIR}/${SAMPLE_NAME}/hifiasm_run/prokka_protein
     echo -e "${gene}\t${cds}\t${rRNA}\t${tRNA}\t${psuedoFrac}\t${vacA}" > ${ROOT_DIR}/${SAMPLE_NAME}/Report/temp/hifi_assemble_annotation.txt
 	
 	run_busco ${PROCESSED_HGAP_DIR}/${FINAL_FASTA_NAME}_chromosomal.fasta
-	grep 'C:' ${PROCESSED_HGAP_DIR}/${FINAL_FASTA_NAME}_chromosomal/short_summary.specific.campylobacterales_odb10.${FINAL_FASTA_NAME}_chromosomal.txt >> ${ROOT_DIR}/${SAMPLE_NAME}/Report/temp/hifi_assemble_annotation.txt
-
+	if [[ -f ${PROCESSED_HGAP_DIR}/${FINAL_FASTA_NAME}_chromosomal/short_summary.specific.campylobacterales_odb10.${FINAL_FASTA_NAME}_chromosomal.txt ]]; then 
+		grep 'C:' ${PROCESSED_HGAP_DIR}/${FINAL_FASTA_NAME}_chromosomal/short_summary.specific.campylobacterales_odb10.${FINAL_FASTA_NAME}_chromosomal.txt >> ${ROOT_DIR}/${SAMPLE_NAME}/Report/temp/raw_assemble_annotation.txt
+	else
+		run_busco ${PROCESSED_HGAP_DIR}/${FINAL_FASTA_NAME}_chromosomal.fasta
+		grep 'C:' ${PROCESSED_HGAP_DIR}/${FINAL_FASTA_NAME}_chromosomal/short_summary.specific.campylobacterales_odb10.${FINAL_FASTA_NAME}_chromosomal.txt >> ${ROOT_DIR}/${SAMPLE_NAME}/Report/temp/raw_assemble_annotation.txt
+	fi
 	
 	if [[ $CIRCULAR_CHROMOSOMAL -eq 0 ]];then 
 		mv ${PROCESSED_HGAP_DIR}/${FINAL_FASTA_NAME}_chromosomal.fasta ${PROCESSED_HGAP_DIR}/${FINAL_FASTA_NAME}_chromosomal_NC.fasta
@@ -192,7 +197,7 @@ elif [[ $(ls ${PROCESSED_HGAP_DIR}/ptg*.fa | wc -l) -gt 0 ]];then
 		if [[ $CIRCULAR_PLASMID -gt 0 ]];then 
 			echo "$i is circularized plasmid and included."
 			sed "s/>/>${SAMPLE_NAME}_/" $i > ${PROCESSED_HGAP_DIR}/${FINAL_FASTA_NAME}_${NAME}_plasmid.fasta
-			COV=$(grep ${NAME} ${ORIGINAL_FASTQ_DIR}/../hifiasm_out/${FINAL_FASTA_NAME}*.asm.p_ctg.gfa | head -1 | awk '{print $5}' | cut -f3 -d:)
+			COV=$(grep ${NAME} ${ORIGINAL_FASTQ_DIR}/../${FINAL_FASTA_NAME}*.asm..p_ctg.gfa | head -1 | awk '{print $5}' | cut -f3 -d:)
             echo -e "${NAME}\t${COV}" >> ${PROCESSED_HGAP_DIR}/../../Report/temp/ccs_coverage.txt
 			repeat_check ${PROCESSED_HGAP_DIR}/${FINAL_FASTA_NAME}_${NAME}_plasmid.fasta
 			cat $i >> ${PROCESSED_HGAP_DIR}/basecall_ref.fasta
@@ -200,7 +205,7 @@ elif [[ $(ls ${PROCESSED_HGAP_DIR}/ptg*.fa | wc -l) -gt 0 ]];then
 		elif [[ $UNCIRCULAR_PLASMID -gt 0 ]];then 
 			echo "$i is uncircularized plasmid to include mannualy."
 			sed "s/>/>${SAMPLE_NAME}_/" $i >  ${PROCESSED_HGAP_DIR}/${FINAL_FASTA_NAME}_${NAME}_plasmid_NC.fasta
-			COV=$(grep ${NAME} ${ORIGINAL_FASTQ_DIR}/../hifiasm_out/${FINAL_FASTA_NAME}*.asm.p_ctg.gfa | head -1 | awk '{print $5}' | cut -f3 -d:)
+			COV=$(grep ${NAME} ${ORIGINAL_FASTQ_DIR}/../${FINAL_FASTA_NAME}*.asm..p_ctg.gfa | head -1 | awk '{print $5}' | cut -f3 -d:)
             echo -e "${NAME}\t${COV}" >> ${PROCESSED_HGAP_DIR}/../../Report/temp/ccs_coverage.txt
 			repeat_check ${PROCESSED_HGAP_DIR}/${FINAL_FASTA_NAME}_${NAME}_plasmid_NC.fasta
 			cat $i >> ${PROCESSED_HGAP_DIR}/basecall_ref.fasta
@@ -208,17 +213,17 @@ elif [[ $(ls ${PROCESSED_HGAP_DIR}/ptg*.fa | wc -l) -gt 0 ]];then
 		fi
 		
 		run_blastn $i ${PROCESSED_HGAP_DIR}/${NAME}_blast.out 	
-		blastn -query $i -db /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Manifest/DoriC_db -out ${PROCESSED_HGAP_DIR}/${IMAGE_NAME}_blastDoriC.txt -max_hsps 5 -outfmt 7
+		blastn -query $i -db /DCEG/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Manifest/DoriC_db -out ${PROCESSED_HGAP_DIR}/${IMAGE_NAME}_blastDoriC.txt -max_hsps 5 -outfmt 7
 	done
 else
 	echo "${FINAL_FASTA_NAME} has no small contig for plasmid checking." 
 	
 fi
 	
-${SMRTCMDS10}/pbmm2 align ${PROCESSED_HGAP_DIR}/basecall_ref.fasta ${ORIGINAL_FASTQ_DIR}/../${SAMPLE_NAME}_deepconsensus.fastq --preset HIFI | samtools sort > ${PROCESSED_HGAP_DIR}/basecall_ref_deepconsensus.bam
-samtools index ${PROCESSED_HGAP_DIR}/basecall_ref_deepconsensus.bam
+pbmm2 align ${PROCESSED_HGAP_DIR}/basecall_ref.fasta ${ORIGINAL_FASTQ_DIR}/../../pb_ccs/ccs.Q20.fastq.gz --preset HIFI | samtools sort > ${PROCESSED_HGAP_DIR}/basecall_ref.bam
+samtools index ${PROCESSED_HGAP_DIR}/basecall_ref.bam
 for i in $(grep '>' ${PROCESSED_HGAP_DIR}/basecall_ref.fasta | sed 's/>//g' );do
-	samtools depth -r "${i}" ${PROCESSED_HGAP_DIR}/basecall_ref_deepconsensus.bam > ${PROCESSED_HGAP_DIR}/${i}.depth 
+	samtools depth -r "${i}" ${PROCESSED_HGAP_DIR}/basecall_ref.bam > ${PROCESSED_HGAP_DIR}/${i}.depth 
 	Rscript ./coverage_plot.R ${PROCESSED_HGAP_DIR}/${i}.depth 
 	cp -l ${PROCESSED_HGAP_DIR}/coverage_plot_${i}.png ${PROCESSED_HGAP_DIR}/../../Report/temp
 done

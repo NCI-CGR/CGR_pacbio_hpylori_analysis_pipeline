@@ -2,14 +2,13 @@
 . ./global_bash_config.rc
 
 MANIFEST=$1
-
+dos2unix $MANIFEST
 
 for i in  $(awk -F "\t" '{if(NR>1){print $1"_"$2"_"$3}}' $MANIFEST);do
-	VIAL_ID=$(echo $i | cut -f1 -d_)
+	VIAL_ID=$(echo $i | rev | cut -f3- -d_ | rev)
 	#CGR_ID=$(awk -F "\t" -v vial=$VIAL_ID '{if($1==vial){print $2}}' $MANIFEST)
 	#HGAP_ANALYSISID=$(awk -F "\t" -v vial=$VIAL_ID '{if($1==vial){print $3}}' $MANIFEST)
-	CGR_ID=$(echo $i | cut -f2 -d_)
-	HGAP_ANALYSISID=$(echo $i | cut -f3 -d_)
+	HGAP_ANALYSISID=$(echo $i | awk -F"_" '{print $NF}')
 	# HGAP_ANALYSISID_PART1_PRE=$(echo $HGAP_ANALYSISID | rev | cut -c4- | rev )
 	# HGAP_ANALYSISID_PART1=$(printf "%03d\n" $HGAP_ANALYSISID_PART1_PRE)
 	# HGAP_ANALYSISID_PART2=$(echo $HGAP_ANALYSISID | rev | cut -c1-3 | rev)
@@ -32,9 +31,9 @@ for i in  $(awk -F "\t" '{if(NR>1){print $1"_"$2"_"$3}}' $MANIFEST);do
 		
 		rm ${LOG_DIR}/step4_basemod_call_${HGAP_ANALYSISID}.std* 2>/dev/null
 	
-		CMD="qsub -cwd -q $QUEUE -N Step4_basemod_call_${HGAP_ANALYSISID} -e ${LOG_DIR}/step4_basemod_call_${HGAP_ANALYSISID}.stderr -o ${LOG_DIR}/step4_basemod_call_${HGAP_ANALYSISID}.stdout -S /bin/sh ./step4_running_basemod_single.sh $i $MANIFEST"
-		#CMD="sbatch -e ${LOG_DIR}/step4_basemod_call_${HGAP_ANALYSISID}.stderr -o ${LOG_DIR}/step4_basemod_call_${HGAP_ANALYSISID}.stdout ./step4_running_basemod_single_v3.sh $i $MANIFEST"
-touch ${STEP4_WORKING_FLAG};
+		#CMD="qsub -cwd -q $QUEUE -N Step4_basemod_call_${HGAP_ANALYSISID} -e ${LOG_DIR}/step4_basemod_call_${HGAP_ANALYSISID}.stderr -o ${LOG_DIR}/step4_basemod_call_${HGAP_ANALYSISID}.stdout -S /bin/sh ./step4_running_basemod_single.sh $i $MANIFEST"
+		CMD="sbatch -c 2 -e ${LOG_DIR}/step4_basemod_call_${HGAP_ANALYSISID}.stderr -o ${LOG_DIR}/step4_basemod_call_${HGAP_ANALYSISID}.stdout ./step4_running_basemod_single_v3.sh $i $MANIFEST"
+		touch ${STEP4_WORKING_FLAG};
 		echo $CMD >> NOHUPS/nohup_step4_$(date +\%Y\%m\%d).txt
 		eval $CMD
 	else	
@@ -43,8 +42,8 @@ touch ${STEP4_WORKING_FLAG};
 		
 		rm ${LOG_DIR}/step4_basemod_call_${HGAP_ANALYSISID}.std* 2>/dev/null
 	
-		CMD="qsub -cwd -q $QUEUE -N Step4_basemod_call_${HGAP_ANALYSISID} -e ${LOG_DIR}/step4_basemod_call_${HGAP_ANALYSISID}.stderr -o ${LOG_DIR}/step4_basemod_call_${HGAP_ANALYSISID}.stdout -S /bin/sh ./step4_running_basemod_single.sh $i $MANIFEST"
-		#CMD="sbatch -e ${LOG_DIR}/step4_basemod_call_${HGAP_ANALYSISID}.stderr -o ${LOG_DIR}/step4_basemod_call_${HGAP_ANALYSISID}.stdout ./step4_running_basemod_single_v3.sh $i $MANIFEST"
+		#CMD="qsub -cwd -q $QUEUE -N Step4_basemod_call_${HGAP_ANALYSISID} -e ${LOG_DIR}/step4_basemod_call_${HGAP_ANALYSISID}.stderr -o ${LOG_DIR}/step4_basemod_call_${HGAP_ANALYSISID}.stdout -S /bin/sh ./step4_running_basemod_single.sh $i $MANIFEST"
+		CMD="sbatch -c 2 --partition $QUEUE -e ${LOG_DIR}/step4_basemod_call_${HGAP_ANALYSISID}.stderr -o ${LOG_DIR}/step4_basemod_call_${HGAP_ANALYSISID}.stdout ./step4_running_basemod_single_v3.sh $i $MANIFEST"
 		touch ${STEP4_WORKING_FLAG};
 		echo $CMD >> NOHUPS/nohup_step4_$(date +\%Y\%m\%d).txt
 		eval $CMD

@@ -14,7 +14,7 @@ echo -e "SAMPLE\tM6A_QUAL\tM6A_COV\tM6A_IPD\tM6A_IDENTQV\tM4C_QUAL\tM4C_COV\tM4C
 
 #for REPORT in $(awk -F"\t" 'NR>1{print "${ROOT_DIR}/"$1"_"$2"_"$3"/Report/temp/polished_assembly_report.txt"}' $MANIFEST);do
 for i in  $(awk -F "\t" '{if(NR>1){print $1"_"$2"_"$3}}' $MANIFEST);do
-	VIAL_ID=$(echo $i | cut -f1 -d_)
+	VIAL_ID=$(echo $i | rev | cut -f3- -d_ | rev)
 	HGAP_ANALYSISID=$(awk -F "\t" -v vial=$VIAL_ID '{if($1==vial){print $3}}' $MANIFEST)
 	CGR_ID=$(awk -F "\t" -v vial=$VIAL_ID '{if($1==vial){print $2}}' $MANIFEST)
 	REFERENCE_VIAL=$(echo $i | cut -f1 -d_ |sed -e 's/-/_/g')
@@ -24,8 +24,8 @@ for i in  $(awk -F "\t" '{if(NR>1){print $1"_"$2"_"$3}}' $MANIFEST);do
 	REPORT=${ROOT_DIR}/${SAMPLE}/Report/temp/polished_assembly_report.txt
 	echo $REPORT
 
-	CHR=$(grep $VIAL_ID $MANIFEST | awk -F"\t" '{print $4}' )
-	PLA=$(grep $VIAL_ID $MANIFEST | awk -F"\t" '{print $5}' )
+	CHR=$(awk -F"\t" -v vialID=${VIAL_ID} '{if($1==vialID){print $4}}' $MANIFEST )
+	PLA=$(awk -F"\t" -v vialID=${VIAL_ID} '{if($1==vialID){print $5}}' $MANIFEST )
 	rawPASS=0
 	hifiPASS=0
 	echo $CHR
@@ -82,13 +82,13 @@ for i in  $(awk -F "\t" '{if(NR>1){print $1"_"$2"_"$3}}' $MANIFEST);do
 	if [[ $CHR == "mga" ]]; then
 		echo "${SAMPLE} chr assembly is from hgap. "
 		ANNO=$(head -1 ${ROOT_DIR}/${SAMPLE}/Report/temp/raw_assemble_annotation.txt )
-		BUSCO=$(tail -1 ${ROOT_DIR}/${SAMPLE}/Report/temp/raw_assemble_annotation.txt )
+		BUSCO=$(head -2 ${ROOT_DIR}/${SAMPLE}/Report/temp/raw_assemble_annotation.txt |tail -1)
 		cp -l -r ${ROOT_DIR}/${SAMPLE}/HGAP_run/prokka_protein ${ROOT_DIR}/${SAMPLE}/Delivery/
 	elif [[ $CHR == "hifiasm" ]]; then	
 		echo "${SAMPLE} chr assembly is from hifiasm. "
 		ANNO=$(head -1 ${ROOT_DIR}/${SAMPLE}/Report/temp/hifi_assemble_annotation.txt )
 		cp -l -r ${ROOT_DIR}/${SAMPLE}/hifiasm_run/prokka_protein ${ROOT_DIR}/${SAMPLE}/Delivery/
-		BUSCO=$(tail -1 ${ROOT_DIR}/${SAMPLE}/Report/temp/hifi_assemble_annotation.txt )
+		BUSCO=$(head -2 ${ROOT_DIR}/${SAMPLE}/Report/temp/hifi_assemble_annotation.txt |tail -1)
 	elif [[ $CHR == "both" ]] && [[ $rawPASS == 1 ]]; then
 		echo "${SAMPLE} chr assembly is from hgap and both assembly pass annotation. "
 		ANNO=$(head -1 ${ROOT_DIR}/${SAMPLE}/Report/temp/raw_assemble_annotation.txt )
@@ -108,7 +108,7 @@ for i in  $(awk -F "\t" '{if(NR>1){print $1"_"$2"_"$3}}' $MANIFEST);do
 	echo -e "$SAMPLE\t$ASSEMBLE_COV\t$NUM_CHR_CONTIGS\t$NUM_PLA_CONTIGS\t$NUM_CHR_NC\t$NUM_PLA_NC\t$CHR_LENGTH\t$PLA_LENGTH\t$ANNO\t$BUSCO" >> $SUMMARY1
 
     echo "#################Create Basemod Calling Summary#####################"
-    REPORT2=${ROOT_DIR}/${SAMPLE}/BASEMOD_hifi_run/outputs/motifs.gff
+    REPORT2=${ROOT_DIR}/${SAMPLE}/BASEMOD_hifi_run/outputs/basemods.gff
 #for REPORT in ${ROOT_DIR}/*/BASEMOD_hifi_run/tasks/motif_maker.tasks.reprocess-0/motifs.gff;do
 
 	CONTIG=`grep '##sequence-region' $REPORT2 |head -1 | cut -f2 -d" " | cut -f1 -d'|'`

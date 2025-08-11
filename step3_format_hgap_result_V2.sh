@@ -12,7 +12,7 @@ fi
 ORIGINAL_FASTQ_DIR=$(dirname $ORIGINAL_FASTQ)
 RESEQUENCE_FASTQ_DIR=${ORIGINAL_FASTQ_DIR}/../Resequence/circlator
 PROCESSED_HGAP_DIR=${ORIGINAL_FASTQ_DIR}/../processed_hgap
-FINAL_FASTA_NAME=$(dirname $ORIGINAL_FASTQ_DIR | xargs dirname | xargs basename | cut -f1 -d_)
+FINAL_FASTA_NAME=$(dirname $ORIGINAL_FASTQ_DIR | xargs dirname | xargs basename | rev | cut -f3- -d_ | rev)
 SAMPLE_NAME=$(dirname $ORIGINAL_FASTQ_DIR | xargs dirname | xargs basename)
 HGAP_ANALYSISID=$(echo $ORIGINAL_FASTQ_DIR | rev | cut -f1 -d_ | rev)
 
@@ -47,6 +47,8 @@ echo "###########################"
 #assume the largest contig is the bacteria contig
 #for cases bacteria contig not in 1 piece, mannual lable the smaller piece as chr instead of plasmid
 #sed 's/\(.*\)|arrow/\1/ remove last occurence of |arrow in case of 2 or more contig merged by circlator
+sed -i 's|/|__|g' $ORIGINAL_FASTQ
+sed -i 's|/|__|g' ${ORIGINAL_FASTQ_DIR}/04.merge.circularise_details.log 
 BAC_CHR=$(cat $ORIGINAL_FASTQ | awk '/^>/ {if(N>0) printf("\n"); printf("%s\t",$0);N++;next;} {printf("%s",$0);} END {if(N>0) printf("\n");}' |awk -F "\t" '{printf("%s\t%d\n",$1,length($2));}' |sort -n -k2 | tail -1 | cut -f1 |  sed s'/>//'| sed 's/\(.*\)|arrow/\1/' )
 
 
@@ -80,7 +82,7 @@ else
 fi
 
 
-cp -l ${COVP_DIR}/coverage_plot_*.png ${PROCESSED_HGAP_DIR}/
+cp ${COVP_DIR}/coverage_plot_*.png ${PROCESSED_HGAP_DIR}/
 mv ${PROCESSED_HGAP_DIR}/coverage_plot_${BAC_CHR}.png ${PROCESSED_HGAP_DIR}/../../Report/temp
 
 #split contigs into separate file
@@ -98,8 +100,9 @@ if [[ -z ${noChr} ]]; then
 
 	#compare 26695 to the chr contig
 	dnadiff NCBI_26695/h-pylori-26695-NC_000915-1_fix.fasta ${PROCESSED_HGAP_DIR}/000000F.fixstart.fasta -p ${PROCESSED_HGAP_DIR}/26695_vs_${SAMPLE_NAME}
+	echo "mummerplot --png -p ${PROCESSED_HGAP_DIR}/26695_vs_${SAMPLE_NAME}_mummerplot ${PROCESSED_HGAP_DIR}/26695_vs_${SAMPLE_NAME}.delta -R NCBI_26695/h-pylori-26695-NC_000915-1_fix.fasta -Q ${PROCESSED_HGAP_DIR}/000000F.fixstart.fasta"
 	mummerplot --png -p ${PROCESSED_HGAP_DIR}/26695_vs_${SAMPLE_NAME}_mummerplot ${PROCESSED_HGAP_DIR}/26695_vs_${SAMPLE_NAME}.delta -R NCBI_26695/h-pylori-26695-NC_000915-1_fix.fasta -Q ${PROCESSED_HGAP_DIR}/000000F.fixstart.fasta
-
+	
 	#mv the last 12 letters to the head
 	CMD="python3 ./fixformat.py ${PROCESSED_HGAP_DIR}/000000F.fixstart.fasta 60 > ${PROCESSED_HGAP_DIR}/${FINAL_FASTA_NAME}_chromosomal.fasta"
 	echo $CMD
@@ -116,7 +119,12 @@ if [[ -z ${noChr} ]]; then
 	echo -e "${gene}\t${cds}\t${rRNA}\t${tRNA}\t${psuedoFrac}\t${vacA}" > ${ROOT_DIR}/${SAMPLE_NAME}/Report/temp/raw_assemble_annotation.txt
 		
 	run_busco ${PROCESSED_HGAP_DIR}/${FINAL_FASTA_NAME}_chromosomal.fasta
-	grep 'C:' ${PROCESSED_HGAP_DIR}/${FINAL_FASTA_NAME}_chromosomal/short_summary.specific.campylobacterales_odb10.${FINAL_FASTA_NAME}_chromosomal.txt >> ${ROOT_DIR}/${SAMPLE_NAME}/Report/temp/raw_assemble_annotation.txt
+	if [[ -f ${PROCESSED_HGAP_DIR}/${FINAL_FASTA_NAME}_chromosomal/short_summary.specific.campylobacterales_odb10.${FINAL_FASTA_NAME}_chromosomal.txt ]]; then 
+		grep 'C:' ${PROCESSED_HGAP_DIR}/${FINAL_FASTA_NAME}_chromosomal/short_summary.specific.campylobacterales_odb10.${FINAL_FASTA_NAME}_chromosomal.txt >> ${ROOT_DIR}/${SAMPLE_NAME}/Report/temp/raw_assemble_annotation.txt
+	else
+		run_busco ${PROCESSED_HGAP_DIR}/${FINAL_FASTA_NAME}_chromosomal.fasta
+		grep 'C:' ${PROCESSED_HGAP_DIR}/${FINAL_FASTA_NAME}_chromosomal/short_summary.specific.campylobacterales_odb10.${FINAL_FASTA_NAME}_chromosomal.txt >> ${ROOT_DIR}/${SAMPLE_NAME}/Report/temp/raw_assemble_annotation.txt
+	fi
 	
 	cp ${PROCESSED_HGAP_DIR}/${FINAL_FASTA_NAME}_chromosomal.fasta ${PROCESSED_HGAP_DIR}/basecall_ref.fasta
 
@@ -248,7 +256,7 @@ elif [[ $(ls ${PROCESSED_HGAP_DIR}/ctg*.fa | wc -l) -gt 0 ]];then
 			repeat_check ${PROCESSED_HGAP_DIR}/${FINAL_FASTA_NAME}_${IMAGE_NAME}_plasmid_NC.fasta
 		fi 
 		run_blastn $i ${PROCESSED_HGAP_DIR}/${IMAGE_NAME}_blast.out 
-		blastn -query $i -db /CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Manifest/DoriC_db -out ${PROCESSED_HGAP_DIR}/${IMAGE_NAME}_blastDoriC.txt -max_hsps 5 -outfmt 7
+		blastn -query $i -db /DCEG/CGF/Bioinformatics/Production/Wen/20180220_test_hgap_run/Manifest/DoriC_db -out ${PROCESSED_HGAP_DIR}/${IMAGE_NAME}_blastDoriC.txt -max_hsps 5 -outfmt 7
 	done
 else
 	echo "${FINAL_FASTA_NAME} has no small contig for plasmid checking." 
