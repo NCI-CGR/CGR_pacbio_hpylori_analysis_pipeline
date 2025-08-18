@@ -8,6 +8,11 @@ It is consisted of 3 aspects.
 - Reseq Pipeline: For chromosomal contigs that fail to circularise with default circlator run, we will retrieve assemble fasta and run resequence analysis(mapping subreads to assembly) and run a ciruclarization again. (deprecated)
 - Plasmid Followup Pipeline: For plasmid contigs that fail to circularise with default run, we will have 3 ways to try to ciruclarize. (deprecated)
 
+## Software
+- hifiasm
+- [prokka](https://anaconda.org/bioconda/prokka)
+- [busco](https://anaconda.org/bioconda/busco)
+
 ## Main pipeline:
 - Step 01: step1_running_hgap_circlator_batch.sh (to run hgap on demultiplexed samples, for now we don't need to run this one because Kristie is currently running HGAP through SMRTLink)
 - Step 02: step2_running_hgap.sh $MANIFEST (to run circlator and nucmer self repeat)

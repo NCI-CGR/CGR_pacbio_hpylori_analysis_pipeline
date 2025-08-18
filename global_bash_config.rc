@@ -113,7 +113,7 @@ run_prokka() {
 	
 	prokka ${1} --outdir ${3} --prefix ${2} --force --proteins ~/20180220_test_hgap_run/NCBI_26695/Hp26695.faa --centre X --compliant
 	
-	psuedo=$(perl /home/luow2/20180220_test_hgap_run/prokka_suggest_pseudo.pl ${3}/${2}.faa | tail -1 | cut -f2 -d:)
+	psuedo=$(perl $(pwd)/prokka_suggest_pseudo.pl ${3}/${2}.faa | tail -1 | cut -f2 -d:)
 	gene=$(grep gene ${3}/${2}.txt | cut -f2 -d:)
 	cds=$(grep CDS  ${3}/${2}.txt | cut -f2 -d:); 
 	rRNA=$(grep rRNA ${3}/${2}.txt | cut -f2 -d:); 
